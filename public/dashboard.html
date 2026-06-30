@@ -12,68 +12,140 @@
       <h1>Restaurant Business Dashboard</h1>
       <p>CS5200 Practicum I | Azure Static Web Apps + Azure Functions + Azure MySQL</p>
     </div>
-    <nav>
+    <nav aria-label="Main navigation">
       <a href="/">API Status</a>
-      <a href="/dashboard.html">Dashboard</a>
+      <a href="/dashboard.html" aria-current="page">Dashboard</a>
     </nav>
   </header>
 
   <main>
     <section class="panel intro-panel">
-      <h2>Dashboard Foundation</h2>
-      <p>
-        This page is the foundation for the final dashboard. It uses a responsive layout
-        and will load data through asynchronous API calls later.
-      </p>
-      <button id="load-dashboard-button">Check Dashboard Readiness</button>
-      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
+      <div>
+        <h2>Dashboard</h2>
+        <p>
+          This dashboard loads data only after you click the load button. It uses asynchronous API calls
+          and responsive layout rules, so the page does not wait for database queries during its first load.
+        </p>
+      </div>
+      <div class="action-row">
+        <button id="load-dashboard-button" type="button">Load Dashboard Data</button>
+        <button id="load-daily-button" type="button" disabled>Load Daily Details</button>
+      </div>
+      <p id="dashboard-status" role="status">Dashboard data has not been loaded yet.</p>
     </section>
 
-    <section class="kpi-grid">
+    <section class="kpi-grid" aria-label="Key performance indicators">
       <article class="kpi-card">
         <h3>Total Visits</h3>
         <p id="kpi-total-visits">--</p>
       </article>
-
       <article class="kpi-card">
         <h3>Total Sales</h3>
         <p id="kpi-total-sales">--</p>
       </article>
-
       <article class="kpi-card">
         <h3>Total Tips</h3>
         <p id="kpi-total-tips">--</p>
       </article>
-
       <article class="kpi-card">
         <h3>Date Range</h3>
         <p id="kpi-date-range">--</p>
       </article>
     </section>
 
-    <section class="dashboard-grid">
+    <section class="dashboard-grid" aria-label="Dashboard charts">
       <article class="panel chart-panel">
-        <h2>Monthly Trends</h2>
-        <div class="placeholder-box">Future chart area</div>
+        <h2>Monthly Total Sales</h2>
+        <div class="chart-shell"><canvas id="monthly-sales-chart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Monthly Visit Count</h2>
+        <div class="chart-shell"><canvas id="monthly-visits-chart"></canvas></div>
       </article>
 
       <article class="panel chart-panel">
         <h2>Restaurant Performance</h2>
-        <div class="placeholder-box">Future chart or table area</div>
+        <div class="chart-shell"><canvas id="restaurant-sales-chart"></canvas></div>
       </article>
 
       <article class="panel chart-panel">
         <h2>Meal Type Performance</h2>
-        <div class="placeholder-box">Future chart or table area</div>
+        <div class="chart-shell"><canvas id="meal-type-chart"></canvas></div>
       </article>
 
       <article class="panel chart-panel">
         <h2>Payment Method Performance</h2>
-        <div class="placeholder-box">Future chart or table area</div>
+        <div class="chart-shell"><canvas id="payment-method-chart"></canvas></div>
       </article>
+
+      <article class="panel chart-panel">
+        <h2>Alcohol Sales Percentage</h2>
+        <div class="chart-shell"><canvas id="alcohol-trend-chart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Loyalty Summary</h2>
+        <div class="chart-shell"><canvas id="loyalty-chart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Discount Impact</h2>
+        <div class="chart-shell"><canvas id="discount-chart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Wait Time Analysis</h2>
+        <div class="chart-shell"><canvas id="wait-time-chart"></canvas></div>
+      </article>
+
+      <article class="panel table-panel">
+        <h2>Top Server Performance</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Server</th>
+                <th>Restaurant</th>
+                <th>Visits</th>
+                <th>Total Sales</th>
+                <th>Tips</th>
+              </tr>
+            </thead>
+            <tbody id="server-performance-body">
+              <tr><td colspan="5">Load dashboard data to view server results.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel daily-panel" aria-label="Daily trend details">
+      <h2>Daily Trend Details</h2>
+      <p>
+        Daily details are loaded only when requested to reduce waiting time and avoid downloading extra data.
+      </p>
+      <div class="chart-shell daily-chart-shell"><canvas id="daily-sales-chart"></canvas></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Visits</th>
+              <th>Total Sales</th>
+              <th>Tips</th>
+              <th>Average Wait</th>
+            </tr>
+          </thead>
+          <tbody id="daily-trends-body">
+            <tr><td colspan="5">Click “Load Daily Details” after the dashboard data loads.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>
 </html>
