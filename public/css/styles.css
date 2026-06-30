@@ -1,0 +1,29 @@
+#preview-result {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f0f3f7;
+  padding: 16px;
+  border-radius: 6px;
+  max-height: 360px;
+  overflow: auto;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  header {
+    padding: 18px;
+  }
+
+  main {
+    padding: 16px;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}

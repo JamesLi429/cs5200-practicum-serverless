@@ -1,7 +1,7 @@
 const { app } = require("@azure/functions");
 
 app.http("health", {
-  methods: ["GET"],
+  methods: ["GET", "HEAD"],
   authLevel: "anonymous",
   route: "health",
   handler: async () => {

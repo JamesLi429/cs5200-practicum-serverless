@@ -1,43 +1,42 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>CS5200 Serverless Test</title>
+  <title>CS5200 Practicum API Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <h1>CS5200 Serverless API Test</h1>
+  <header>
+    <h1>CS5200 Practicum API Status</h1>
+    <p>Azure Static Web Apps + Managed Azure Functions API + Azure MySQL</p>
+  </header>
 
-  <p>This is only a dummy page for testing Azure Static Web Apps and Azure Functions.</p>
+  <main>
+    <h2>Backend API Test Panel</h2>
+    <p>
+      This page uses asynchronous requests from the browser. It does not load API data when the page first opens.
+      The main test uses lightweight HEAD requests to avoid downloading large datasets.
+    </p>
 
-  <button onclick="testHealth()">Test /api/health</button>
-  <button onclick="testDb()">Test /api/db-test</button>
+    <button id="run-tests-button">Run Lightweight API Tests</button>
 
-  <pre id="result"></pre>
+    <p id="test-summary">Click the button to test the API endpoints.</p>
 
-  <script>
-    async function showResult(url) {
-      const resultBox = document.getElementById("result");
+    <section id="api-results" class="status-grid"></section>
 
-      try {
-        const response = await fetch(url);
-        const text = await response.text();
+    <h2>Small API Preview</h2>
+    <p>
+      These preview buttons use GET requests only for small endpoints.
+    </p>
 
-        resultBox.textContent =
-          "URL: " + url + "\n" +
-          "Status: " + response.status + "\n\n" +
-          text;
-      } catch (error) {
-        resultBox.textContent = "Request failed: " + error.message;
-      }
-    }
+    <button id="preview-db-button">Preview /api/db-test</button>
+    <button id="preview-summary-button">Preview /api/summary</button>
 
-    function testHealth() {
-      showResult("/api/health");
-    }
+    <pre id="preview-result"></pre>
+  </main>
 
-    function testDb() {
-      showResult("/api/db-test");
-    }
-  </script>
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>

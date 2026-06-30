@@ -2,7 +2,7 @@ const { app } = require("@azure/functions");
 const { query } = require("../db");
 
 app.http("db-test", {
-  methods: ["GET"],
+  methods: ["GET", "HEAD"],
   authLevel: "anonymous",
   route: "db-test",
   handler: async (request, context) => {
