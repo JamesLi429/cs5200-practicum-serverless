@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CS5200 Restaurant Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <h1>Restaurant Business Dashboard</h1>
+      <p>CS5200 Practicum I | Azure Static Web Apps + Azure Functions + Azure MySQL</p>
+    </div>
+    <nav>
+      <a href="/">API Status</a>
+      <a href="/dashboard.html">Dashboard</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel intro-panel">
+      <h2>Dashboard Foundation</h2>
+      <p>
+        This page is the foundation for the final dashboard. It uses a responsive layout
+        and will load data through asynchronous API calls later.
+      </p>
+      <button id="load-dashboard-button">Check Dashboard Readiness</button>
+      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <h3>Total Visits</h3>
+        <p id="kpi-total-visits">--</p>
+      </article>
+
+      <article class="kpi-card">
+        <h3>Total Sales</h3>
+        <p id="kpi-total-sales">--</p>
+      </article>
+
+      <article class="kpi-card">
+        <h3>Total Tips</h3>
+        <p id="kpi-total-tips">--</p>
+      </article>
+
+      <article class="kpi-card">
+        <h3>Date Range</h3>
+        <p id="kpi-date-range">--</p>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel chart-panel">
+        <h2>Monthly Trends</h2>
+        <div class="placeholder-box">Future chart area</div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Restaurant Performance</h2>
+        <div class="placeholder-box">Future chart or table area</div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Meal Type Performance</h2>
+        <div class="placeholder-box">Future chart or table area</div>
+      </article>
+
+      <article class="panel chart-panel">
+        <h2>Payment Method Performance</h2>
+        <div class="placeholder-box">Future chart or table area</div>
+      </article>
+    </section>
+  </main>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
