@@ -1,41 +1,13 @@
 const { app } = require("@azure/functions");
-const mysql = require("mysql2/promise");
-
-function requiredEnv(name) {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
-
-  return value;
-}
-
-function getDbConfig() {
-  return {
-    host: requiredEnv("MYSQL_HOST"),
-    port: Number(process.env.MYSQL_PORT || 3306),
-    user: requiredEnv("MYSQL_USER"),
-    password: requiredEnv("MYSQL_PASSWORD"),
-    database: requiredEnv("MYSQL_DATABASE"),
-    ssl: {
-      minVersion: "TLSv1.2",
-      rejectUnauthorized: true
-    }
-  };
-}
+const { query } = require("../db");
 
 app.http("db-test", {
   methods: ["GET"],
   authLevel: "anonymous",
   route: "db-test",
   handler: async (request, context) => {
-    let connection;
-
     try {
-      connection = await mysql.createConnection(getDbConfig());
-
-      const [rows] = await connection.execute(
+      const rows = await query(
         "SELECT COUNT(*) AS visit_count FROM visits"
       );
 
@@ -65,10 +37,6 @@ app.http("db-test", {
           error: error.code || error.message
         })
       };
-    } finally {
-      if (connection) {
-        await connection.end();
-      }
     }
   }
 });
