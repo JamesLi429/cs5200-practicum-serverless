@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CS5200 Serverless Test</title>
+</head>
+<body>
+  <h1>CS5200 Serverless API Test</h1>
+
+  <p>This is only a dummy page for testing Azure Static Web Apps and Azure Functions.</p>
+
+  <button onclick="testHealth()">Test /api/health</button>
+  <button onclick="testDb()">Test /api/db-test</button>
+
+  <pre id="result"></pre>
+
+  <script>
+    async function showResult(url) {
+      const resultBox = document.getElementById("result");
+
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+
+        resultBox.textContent =
+          "URL: " + url + "\n" +
+          "Status: " + response.status + "\n\n" +
+          text;
+      } catch (error) {
+        resultBox.textContent = "Request failed: " + error.message;
+      }
+    }
+
+    function testHealth() {
+      showResult("/api/health");
+    }
+
+    function testDb() {
+      showResult("/api/db-test");
+    }
+  </script>
+</body>
+</html>

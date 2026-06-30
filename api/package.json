@@ -1,0 +1,12 @@
+{
+  "name": "cs5200-practicum-api",
+  "version": "1.0.0",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "mysql2": "^3.0.0"
+  }
+}
