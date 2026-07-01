@@ -208,26 +208,97 @@ function renderHighlights() {
   const list = document.getElementById("latest-highlights");
   list.innerHTML = "";
 
-  const rows = [
-    ["Total revenue YOY: ", data.totalRevenueYoy.percentChange, formatPercent(data.totalRevenueYoy.percentChange)],
-    ["Total visits YOY: ", data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange)]
-  ];
-
-  rows.forEach(([label, value, text]) => {
+  const addMetricItem = (label, value, text) => {
     const li = document.createElement("li");
     li.appendChild(document.createTextNode(label));
     li.appendChild(metricSpan(value, text));
     list.appendChild(li);
-  });
+  };
 
-  const best = document.createElement("li");
+  const addNameMetricItem = (label, name, value, text, suffix = "") => {
+    const li = document.createElement("li");
+    li.appendChild(document.createTextNode(label));
+
+    const strongName = document.createElement("strong");
+    strongName.textContent = name || "--";
+
+    li.appendChild(strongName);
+
+    if (value !== null && value !== undefined) {
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(metricSpan(value, text));
+    }
+
+    if (suffix) {
+      li.appendChild(document.createTextNode(suffix));
+    }
+
+    list.appendChild(li);
+  };
+
+  addMetricItem(
+    "Total revenue YOY: ",
+    data.totalRevenueYoy.percentChange,
+    formatPercent(data.totalRevenueYoy.percentChange)
+  );
+
+  addMetricItem(
+    "Total visits YOY: ",
+    data.totalVisitsYoy.percentChange,
+    formatPercent(data.totalVisitsYoy.percentChange)
+  );
+
   if (data.bestRestaurantYoy) {
-    best.appendChild(document.createTextNode(`Best restaurant YOY: ${data.bestRestaurantYoy.restaurantName}: `));
-    best.appendChild(metricSpan(data.bestRestaurantYoy.revenueYoyPercent, formatPercent(data.bestRestaurantYoy.revenueYoyPercent)));
+    addNameMetricItem(
+      "Best restaurant YOY: ",
+      data.bestRestaurantYoy.restaurantName,
+      data.bestRestaurantYoy.revenueYoyPercent,
+      formatPercent(data.bestRestaurantYoy.revenueYoyPercent)
+    );
   } else {
-    best.textContent = "Best restaurant YOY: --";
+    addNameMetricItem("Best restaurant YOY: ", "--", null, "--");
   }
-  list.appendChild(best);
+
+  const latestYear = Number(data.latestYear || new Date(`${data.dataLastUpdated}T00:00:00Z`).getUTCFullYear());
+
+  const annualRestaurants = annualRestaurantRows();
+  const topRestaurant = rankByYear(annualRestaurants, latestYear, "totalRevenue", 1)[0];
+
+  if (topRestaurant) {
+    addNameMetricItem(
+      "Top Restaurant performance: ",
+      topRestaurant.restaurantName,
+      topRestaurant.totalRevenue,
+      formatMoney(topRestaurant.totalRevenue)
+    );
+  } else {
+    addNameMetricItem("Top Restaurant performance: ", "--", null, "--");
+  }
+
+  if (data.bestRestaurantYoy) {
+    addNameMetricItem(
+      "Top Restaurant performance YOY: ",
+      data.bestRestaurantYoy.restaurantName,
+      data.bestRestaurantYoy.revenueYoyPercent,
+      formatPercent(data.bestRestaurantYoy.revenueYoyPercent)
+    );
+  } else {
+    addNameMetricItem("Top Restaurant performance YOY: ", "--", null, "--");
+  }
+
+  const topServer = rankByYear(dashboardState.serverRankings?.data?.yearly || [], latestYear, "totalRevenue", 1)[0];
+
+  if (topServer) {
+    addNameMetricItem(
+      "Top Server's Revenue Contribution: ",
+      topServer.serverName || `Server ${topServer.serverEmpId}`,
+      topServer.totalRevenue,
+      formatMoney(topServer.totalRevenue),
+      ` at ${topServer.restaurantName || "--"}`
+    );
+  } else {
+    addNameMetricItem("Top Server's Revenue Contribution: ", "--", null, "--");
+  }
 
   setText("today-date", holidays ? formatDate(holidays.today) : formatDate(new Date().toISOString().slice(0, 10)));
   setText("data-last-updated", formatDate(data.dataLastUpdated));
@@ -351,7 +422,7 @@ function renderCustomerCharts() {
     populateYearSelect(selectId, data.years, renderCustomerCharts);
     const year = Number(document.getElementById(selectId).value);
     const values = getSingleYearValues(data.monthly, metricKey, year);
-    renderLineChart(chartId, `${label} ${year}`, values, COLORS[index], { percent, formatter });
+    renderLineChart(chartId, `${label} ${year}`, values, COLORS[0], { percent, formatter });
     updateLineNote(noteId, data.monthly, metricKey, noteLabel, year, formatter);
   });
 }
@@ -497,8 +568,8 @@ function getRestaurantYoyAvailableYears() {
       return false;
     }
 
-    const current = rankByYear(allRows, year, "revenueYoyPercent", 99);
-    return current.some((row) => row.revenueYoyPercent !== null && Number(row.revenueYoyPercent) > -100);
+    const current = rankByYear(allRows, year, "yoy", 99);
+    return current.some((row) => row.yoy !== null && Number(row.yoy) > -99.995);
   });
 }
 
