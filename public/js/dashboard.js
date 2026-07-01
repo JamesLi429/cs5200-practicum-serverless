@@ -542,6 +542,7 @@ function renderRestaurantTotalRanking() {
       const revenueShare = (Number(row.totalRevenue || 0) / yearTotalRevenue) * 100;
       return revenueShare > 0;
     })
+    .slice(0, 10)
     .map((row, index) => ({
       ...row,
       rank: index + 1
