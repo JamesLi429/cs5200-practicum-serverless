@@ -18,7 +18,13 @@ $endpoints = @(
     "/api/wait-time-analysis",
     "/api/server-performance",
     "/api/daily-trends",
-    "/api/metadata"
+    "/api/metadata",
+    "/api/dashboard-highlights",
+    "/api/date-holidays",
+    "/api/yoy-business-metrics",
+    "/api/restaurant-revenue-yoy",
+    "/api/customer-yoy-metrics",
+    "/api/server-rankings"
 )
 
 $failed = 0

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>CS5200 Restaurant Dashboard</title>
+  <title>CS5200 Restaurant Business Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/css/dashboard.css">
 </head>
@@ -14,138 +14,171 @@
     </div>
     <nav aria-label="Main navigation">
       <a href="/">API Status</a>
-      <a href="/dashboard.html" aria-current="page">Dashboard</a>
+      <a href="/dashboard.html">Dashboard</a>
     </nav>
   </header>
 
   <main>
-    <section class="panel intro-panel">
+    <section class="top-highlight-grid" aria-label="Top dashboard highlights">
+      <article class="panel highlight-panel">
+        <h2>Latest Business Highlights</h2>
+        <ol id="latest-highlights">
+          <li>Total revenue YOY: --</li>
+          <li>Total visits YOY: --</li>
+          <li>Best restaurant YOY: --</li>
+        </ol>
+      </article>
+
+      <article class="panel highlight-panel">
+        <h2>Date and Holiday Information</h2>
+        <p><strong>Today:</strong> <span id="today-date">--</span></p>
+        <p><strong>Data last updated:</strong> <span id="data-last-updated">--</span></p>
+        <h3>Upcoming holidays</h3>
+        <ol id="holiday-list">
+          <li>--</li>
+          <li>--</li>
+          <li>--</li>
+        </ol>
+      </article>
+    </section>
+
+    <section class="control-panel panel">
       <div>
-        <h2>Dashboard</h2>
+        <h2>Dashboard Controls</h2>
         <p>
-          This dashboard loads data only after you click the load button. It uses asynchronous API calls
-          and responsive layout rules, so the page does not wait for database queries during its first load.
+          Data loads only after user action. Charts use asynchronous API calls and support responsive layout.
+          Chart cards can be dragged during the session, and their order is saved in this browser.
         </p>
       </div>
-      <div class="action-row">
-        <button id="load-dashboard-button" type="button">Load Dashboard Data</button>
-        <button id="load-daily-button" type="button" disabled>Load Daily Details</button>
+      <div class="button-row">
+        <button id="load-dashboard-button">Load Dashboard Data</button>
+        <button id="reset-layout-button" type="button">Reset Chart Order</button>
       </div>
-      <p id="dashboard-status" role="status">Dashboard data has not been loaded yet.</p>
+      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
     </section>
 
-    <section class="kpi-grid" aria-label="Key performance indicators">
-      <article class="kpi-card">
-        <h3>Total Visits</h3>
-        <p id="kpi-total-visits">--</p>
-      </article>
-      <article class="kpi-card">
-        <h3>Total Sales</h3>
-        <p id="kpi-total-sales">--</p>
-      </article>
-      <article class="kpi-card">
-        <h3>Total Tips</h3>
-        <p id="kpi-total-tips">--</p>
-      </article>
-      <article class="kpi-card">
-        <h3>Date Range</h3>
-        <p id="kpi-date-range">--</p>
-      </article>
-    </section>
+    <section class="main-dashboard-grid" aria-label="Dashboard sections">
+      <section class="dashboard-column panel">
+        <h2>Business Information</h2>
 
-    <section class="dashboard-grid" aria-label="Dashboard charts">
-      <article class="panel chart-panel">
-        <h2>Monthly Total Sales</h2>
-        <div class="chart-shell"><canvas id="monthly-sales-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Monthly Visit Count</h2>
-        <div class="chart-shell"><canvas id="monthly-visits-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Restaurant Performance</h2>
-        <div class="chart-shell"><canvas id="restaurant-sales-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Meal Type Performance</h2>
-        <div class="chart-shell"><canvas id="meal-type-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Payment Method Performance</h2>
-        <div class="chart-shell"><canvas id="payment-method-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Alcohol Sales Percentage</h2>
-        <div class="chart-shell"><canvas id="alcohol-trend-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Loyalty Summary</h2>
-        <div class="chart-shell"><canvas id="loyalty-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Discount Impact</h2>
-        <div class="chart-shell"><canvas id="discount-chart"></canvas></div>
-      </article>
-
-      <article class="panel chart-panel">
-        <h2>Wait Time Analysis</h2>
-        <div class="chart-shell"><canvas id="wait-time-chart"></canvas></div>
-      </article>
-
-      <article class="panel table-panel">
-        <h2>Top Server Performance</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Server</th>
-                <th>Restaurant</th>
-                <th>Visits</th>
-                <th>Total Sales</th>
-                <th>Tips</th>
-              </tr>
-            </thead>
-            <tbody id="server-performance-body">
-              <tr><td colspan="5">Load dashboard data to view server results.</td></tr>
-            </tbody>
-          </table>
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <h3>Total Revenue YOY</h3>
+            <p id="kpi-total-revenue-yoy">--</p>
+          </article>
+          <article class="kpi-card">
+            <h3>Total Visits YOY</h3>
+            <p id="kpi-total-visits-yoy">--</p>
+          </article>
+          <article class="kpi-card">
+            <h3>Avg Revenue / Visit YOY</h3>
+            <p id="kpi-avg-revenue-yoy">--</p>
+          </article>
+          <article class="kpi-card">
+            <h3>Avg Wait Time YOY</h3>
+            <p id="kpi-avg-wait-yoy">--</p>
+          </article>
         </div>
-      </article>
-    </section>
 
-    <section class="panel daily-panel" aria-label="Daily trend details">
-      <h2>Daily Trend Details</h2>
-      <p>
-        Daily details are loaded only when requested to reduce waiting time and avoid downloading extra data.
-      </p>
-      <div class="chart-shell daily-chart-shell"><canvas id="daily-sales-chart"></canvas></div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Visits</th>
-              <th>Total Sales</th>
-              <th>Tips</th>
-              <th>Average Wait</th>
-            </tr>
-          </thead>
-          <tbody id="daily-trends-body">
-            <tr><td colspan="5">Click “Load Daily Details” after the dashboard data loads.</td></tr>
-          </tbody>
-        </table>
-      </div>
+        <div id="business-chart-zone" class="chart-zone" data-zone-id="business-chart-zone">
+          <article class="chart-card" draggable="true" data-card-id="total-revenue-chart-card">
+            <h3>Total Revenue Trend</h3>
+            <p class="chart-explanation">Monthly revenue by year. Revenue means food bill plus alcohol bill.</p>
+            <div id="total-revenue-chart" class="chart-box"></div>
+            <p id="total-revenue-note" class="chart-note">Above/below average note: --</p>
+          </article>
+
+          <article class="chart-card" draggable="true" data-card-id="total-visits-chart-card">
+            <h3>Total Visits Trend</h3>
+            <p class="chart-explanation">Monthly visits by year.</p>
+            <div id="total-visits-chart" class="chart-box"></div>
+            <p id="total-visits-note" class="chart-note">Above/below average note: --</p>
+          </article>
+
+          <article class="chart-card" draggable="true" data-card-id="avg-revenue-chart-card">
+            <h3>Average Revenue per Visit Trend</h3>
+            <p class="chart-explanation">Monthly average revenue per visit by year.</p>
+            <div id="avg-revenue-chart" class="chart-box"></div>
+            <p id="avg-revenue-note" class="chart-note">Above/below average note: --</p>
+          </article>
+
+          <article class="chart-card" draggable="true" data-card-id="avg-wait-chart-card">
+            <h3>Average Wait Time Trend</h3>
+            <p class="chart-explanation">Monthly average wait time by year.</p>
+            <div id="avg-wait-chart" class="chart-box"></div>
+            <p id="avg-wait-note" class="chart-note">Above/below average note: --</p>
+          </article>
+
+          <article class="chart-card" draggable="true" data-card-id="restaurant-revenue-chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3>Revenue by Each Restaurant YOY</h3>
+                <p class="chart-explanation">Stacked monthly revenue by restaurant. Select a year to compare restaurant contribution by month.</p>
+              </div>
+              <label>
+                Year
+                <select id="restaurant-year-select"></select>
+              </label>
+            </div>
+            <div id="restaurant-revenue-chart" class="chart-box"></div>
+            <p id="restaurant-revenue-note" class="chart-note">Above/below average note: --</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="dashboard-column panel">
+        <h2>Customer-related Information</h2>
+
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <h3>Known Customer Capture Rate</h3>
+            <p id="kpi-customer-capture-rate">--</p>
+          </article>
+          <article class="kpi-card">
+            <h3>Loyalty Member Revenue Share</h3>
+            <p id="kpi-loyalty-revenue-share">--</p>
+          </article>
+        </div>
+
+        <div id="customer-chart-zone" class="chart-zone" data-zone-id="customer-chart-zone">
+          <article class="chart-card" draggable="true" data-card-id="customer-capture-chart-card">
+            <h3>Customer Capture Trend</h3>
+            <p class="chart-explanation">Known customer capture rate = visits with cust_id divided by total visits.</p>
+            <div id="customer-capture-chart" class="chart-box"></div>
+            <p id="customer-capture-note" class="chart-note">Above/below average note: --</p>
+          </article>
+
+          <article class="chart-card" draggable="true" data-card-id="loyalty-share-chart-card">
+            <h3>Loyalty Revenue Trend</h3>
+            <p class="chart-explanation">Loyalty member revenue share = loyalty member revenue divided by total revenue.</p>
+            <div id="loyalty-share-chart" class="chart-box"></div>
+            <p id="loyalty-share-note" class="chart-note">Above/below average note: --</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="dashboard-column panel">
+        <h2>Server Performance Ranking</h2>
+        <p class="chart-explanation">Server rankings exclude sensitive fields such as SSN, birth date, hourly rate, customer email, and customer phone.</p>
+
+        <article class="ranking-card">
+          <h3>Server Revenue Ranking</h3>
+          <div id="server-revenue-ranking"></div>
+        </article>
+
+        <article class="ranking-card">
+          <h3>Server Visit-count Ranking</h3>
+          <div id="server-visit-ranking"></div>
+        </article>
+
+        <article class="ranking-card">
+          <h3>Server Average Tip Percentage Ranking</h3>
+          <div id="server-tip-ranking"></div>
+        </article>
+      </section>
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
   <script src="/js/dashboard.js"></script>
 </body>
 </html>
