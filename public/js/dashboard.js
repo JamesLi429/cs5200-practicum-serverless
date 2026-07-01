@@ -1,6 +1,6 @@
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const COLORS = ["#1264a3", "#1f8f4d", "#d64545", "#8e44ad", "#e67e22", "#2f80ed", "#6c5ce7", "#00897b"];
-const DEFAULT_YEAR = 2025;
+const DEFAULT_YEAR = 2026;
 
 const dashboardState = {
   highlights: null,
@@ -345,8 +345,18 @@ function renderRestaurantRanking() {
   populateYearSelect("restaurant-ranking-year-select", data.years, renderRestaurantRanking);
   const year = Number(document.getElementById("restaurant-ranking-year-select").value);
   const allRows = annualRestaurantRows();
-  const current = rankByYear(allRows, year, "yoy", 10);
-  const previous = rankByYear(allRows, year - 1, "yoy", 99);
+  const current = rankByYear(
+    allRows.filter((row) => row.yoy === null || row.yoy > -99.995),
+    year,
+    "yoy",
+    10
+  );
+  const previous = rankByYear(
+    allRows.filter((row) => row.yoy === null || row.yoy > -99.995),
+    year - 1,
+    "yoy",
+    99
+  );
   const prevMap = new Map(previous.map((row) => [row.restaurantId, row.rank]));
 
   renderSimpleRankingTable(
