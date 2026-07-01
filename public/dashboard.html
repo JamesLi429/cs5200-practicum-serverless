@@ -60,6 +60,17 @@
       </article>
     </section>
 
+    <section class="year-control-panel panel" aria-label="Global year control">
+      <div>
+        <h2>Year View Control</h2>
+        <p>Use this year selector to change all dashboard charts and ranking tables at once.</p>
+      </div>
+      <label>
+        Year
+        <select id="global-year-select"></select>
+      </label>
+    </section>
+
     <section class="main-dashboard-grid" aria-label="Dashboard sections">
       <section class="dashboard-column panel">
         <h2>Business Information</h2>
@@ -142,6 +153,14 @@
         <article class="ranking-card">
           <div class="ranking-header">
             <h3>Restaurant Revenue Ranking</h3>
+            <label>Year<select id="restaurant-total-ranking-year-select"></select></label>
+          </div>
+          <div id="restaurant-total-revenue-ranking"></div>
+        </article>
+
+        <article class="ranking-card">
+          <div class="ranking-header">
+            <h3>Restaurant Revenue YOY Ranking</h3>
             <label>Year<select id="restaurant-ranking-year-select"></select></label>
           </div>
           <div id="restaurant-revenue-ranking"></div>

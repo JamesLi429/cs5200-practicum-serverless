@@ -71,6 +71,31 @@ select {
 .button-row { display: grid; gap: 10px; }
 #dashboard-status { font-weight: bold; margin: 0; }
 
+
+.year-control-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.year-control-panel h2 {
+  margin-top: 0;
+}
+
+.year-control-panel p {
+  margin-bottom: 0;
+}
+
+.year-control-panel label {
+  display: grid;
+  gap: 6px;
+  min-width: 140px;
+  color: #52606d;
+  font-weight: bold;
+}
+
 .top-highlight-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -211,6 +236,7 @@ th { background: #f0f3f7; color: #334e68; }
 }
 @media (max-width: 900px) {
   .main-dashboard-grid, .top-highlight-grid { grid-template-columns: 1fr; }
+  .year-control-panel { display: block; }
   .control-panel { grid-template-columns: 1fr; }
   .control-actions { grid-template-columns: 1fr; }
 }
@@ -220,7 +246,7 @@ th { background: #f0f3f7; color: #334e68; }
   main { padding: 16px; }
   .kpi-grid { grid-template-columns: 1fr; }
   .chart-card-header, .ranking-header { display: block; }
-  .chart-card-header label, .ranking-header label { margin-top: 10px; }
+  .chart-card-header label, .ranking-header label, .year-control-panel label { margin-top: 10px; }
   button { width: 100%; }
   .chart-box svg { min-width: 320px; }
   table { min-width: 430px; }

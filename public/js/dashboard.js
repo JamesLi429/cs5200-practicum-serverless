@@ -8,8 +8,24 @@ const dashboardState = {
   businessMetrics: null,
   restaurantRevenue: null,
   customerMetrics: null,
-  serverRankings: null
+  serverRankings: null,
+  masterYear: DEFAULT_YEAR
 };
+
+const YEAR_SELECT_IDS = [
+  "total-revenue-year-select",
+  "total-visits-year-select",
+  "avg-revenue-year-select",
+  "avg-wait-year-select",
+  "restaurant-total-ranking-year-select",
+  "restaurant-ranking-year-select",
+  "restaurant-year-select",
+  "customer-capture-year-select",
+  "loyalty-share-year-select",
+  "server-revenue-year-select",
+  "server-visit-year-select",
+  "server-tip-year-select"
+];
 
 const LINE_CHARTS = [
   ["total-revenue-year-select", "total-revenue-chart", "total-revenue-note", "totalRevenue", "Total revenue", "Selected year latest active month revenue", formatMoney],
@@ -77,7 +93,16 @@ async function fetchJson(endpoint, timeoutMs = 45000) {
 function setText(id, value) { const node = document.getElementById(id); if (node) node.textContent = value; }
 
 function chooseDefaultYear(years) {
-  if (years.includes(DEFAULT_YEAR)) return DEFAULT_YEAR;
+  const masterYear = Number(dashboardState.masterYear);
+
+  if (years.includes(masterYear)) {
+    return masterYear;
+  }
+
+  if (years.includes(DEFAULT_YEAR)) {
+    return DEFAULT_YEAR;
+  }
+
   return years.length > 0 ? Math.max(...years) : "";
 }
 
@@ -98,6 +123,80 @@ function populateYearSelect(selectId, years, onChange) {
   else select.value = String(chooseDefaultYear(years));
   select.onchange = onChange;
 }
+
+function getDashboardYears() {
+  const yearSet = new Set();
+
+  [
+    dashboardState.businessMetrics?.data?.years,
+    dashboardState.restaurantRevenue?.data?.years,
+    dashboardState.customerMetrics?.data?.years,
+    dashboardState.serverRankings?.data?.years
+  ].forEach((years) => {
+    if (Array.isArray(years)) {
+      years.forEach((year) => yearSet.add(Number(year)));
+    }
+  });
+
+  return yearsDesc([...yearSet].filter(Boolean));
+}
+
+function setSelectYearIfAvailable(selectId, year) {
+  const select = document.getElementById(selectId);
+
+  if (!select) {
+    return;
+  }
+
+  const optionValues = [...select.options].map((option) => Number(option.value));
+
+  if (optionValues.includes(Number(year))) {
+    select.value = String(year);
+  }
+}
+
+function setAllYearSelects(year) {
+  YEAR_SELECT_IDS.forEach((selectId) => setSelectYearIfAvailable(selectId, year));
+}
+
+function renderYearControlledViews() {
+  renderBusinessCharts();
+  renderCustomerCharts();
+  renderRestaurantTotalRanking();
+  renderRestaurantYoyRanking();
+  renderStackedRestaurantChart();
+  renderServerRankings();
+}
+
+function setupGlobalYearSelect() {
+  const select = document.getElementById("global-year-select");
+  const years = getDashboardYears();
+
+  if (!select || years.length === 0) {
+    return;
+  }
+
+  select.innerHTML = "";
+
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = String(year);
+    select.appendChild(option);
+  });
+
+  if (!years.includes(Number(dashboardState.masterYear))) {
+    dashboardState.masterYear = chooseDefaultYear(years);
+  }
+
+  select.value = String(dashboardState.masterYear);
+  select.onchange = () => {
+    dashboardState.masterYear = Number(select.value);
+    setAllYearSelects(dashboardState.masterYear);
+    renderYearControlledViews();
+  };
+}
+
 
 function renderHighlights() {
   const data = dashboardState.highlights?.data;
@@ -321,7 +420,7 @@ function createRankContent(currentRank, previousRank, year) {
 
   const change = rankChangeValue(currentRank, previousRank, year);
 
-  if (change === null) {
+  if (change === null || change === 0) {
     return fragment;
   }
 
@@ -339,10 +438,47 @@ function createMetricCell(value, displayValue) {
   return fragment;
 }
 
-function renderRestaurantRanking() {
+
+function renderRestaurantTotalRanking() {
+  const data = dashboardState.restaurantRevenue?.data;
+
+  if (!data) {
+    return;
+  }
+
+  populateYearSelect("restaurant-total-ranking-year-select", data.years, renderRestaurantTotalRanking);
+
+  const year = Number(document.getElementById("restaurant-total-ranking-year-select").value);
+  const allRows = annualRestaurantRows();
+
+  const currentAll = allRows.filter((row) => row.year === year);
+  const yearTotalRevenue = currentAll.reduce((sum, row) => sum + Number(row.totalRevenue || 0), 0);
+
+  const current = rankByYear(currentAll, year, "totalRevenue", 99);
+  const previous = rankByYear(allRows, year - 1, "totalRevenue", 99);
+  const prevMap = new Map(previous.map((row) => [row.restaurantId, row.rank]));
+
+  renderSimpleRankingTable(
+    "restaurant-total-revenue-ranking",
+    current,
+    ["Rank", "Restaurant", "% of total Revenue", "Revenue"],
+    (row) => {
+      const revenueShare = yearTotalRevenue === 0 ? null : (Number(row.totalRevenue || 0) / yearTotalRevenue) * 100;
+
+      return [
+        createRankContent(row.rank, prevMap.get(row.restaurantId), year),
+        row.restaurantName,
+        revenueShare === null ? "--" : `${formatNumber(revenueShare, 2)}%`,
+        formatMoney(row.totalRevenue)
+      ];
+    }
+  );
+}
+
+function renderRestaurantYoyRanking() {
   const data = dashboardState.restaurantRevenue?.data;
   if (!data) return;
-  populateYearSelect("restaurant-ranking-year-select", data.years, renderRestaurantRanking);
+  populateYearSelect("restaurant-ranking-year-select", data.years, renderRestaurantYoyRanking);
   const year = Number(document.getElementById("restaurant-ranking-year-select").value);
   const allRows = annualRestaurantRows();
   const current = rankByYear(
@@ -538,7 +674,10 @@ async function loadDashboardData() {
     ]);
     if ([highlights, holidays, businessMetrics, restaurantRevenue, customerMetrics, serverRankings].some((r) => r.ok !== true)) throw new Error("At least one dashboard API returned ok=false.");
     dashboardState.highlights = highlights; dashboardState.holidays = holidays; dashboardState.businessMetrics = businessMetrics; dashboardState.restaurantRevenue = restaurantRevenue; dashboardState.customerMetrics = customerMetrics; dashboardState.serverRankings = serverRankings;
-    renderHighlights(); renderKpis(); renderBusinessCharts(); renderCustomerCharts(); renderRestaurantRanking(); renderStackedRestaurantChart(); renderServerRankings();
+    renderHighlights();
+    renderKpis();
+    setupGlobalYearSelect();
+    renderYearControlledViews();
     status.textContent = "Dashboard data loaded successfully.";
   } catch (error) {
     status.textContent = `Dashboard data load failed: ${error.name === "AbortError" ? "Request timed out" : error.message}`;
