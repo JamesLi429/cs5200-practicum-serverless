@@ -20,18 +20,20 @@
 
   <main>
     <section class="control-panel panel">
-      <div>
+      <div class="control-description">
         <h2>Dashboard Controls</h2>
         <p>
           Data loads only after user action. Charts use asynchronous API calls and support responsive layout.
           Chart cards can be dragged during the session, and their order is saved in this browser.
         </p>
       </div>
-      <div class="button-row">
-        <button id="load-dashboard-button">Load Dashboard Data</button>
-        <button id="reset-layout-button" type="button">Reset Chart Order</button>
+      <div class="control-actions">
+        <div class="button-row">
+          <button id="load-dashboard-button">Load Dashboard Data</button>
+          <button id="reset-layout-button" type="button">Reset Chart Order</button>
+        </div>
+        <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
       </div>
-      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
     </section>
 
     <section class="top-highlight-grid" aria-label="Top dashboard highlights">
@@ -60,147 +62,51 @@
     <section class="main-dashboard-grid" aria-label="Dashboard sections">
       <section class="dashboard-column panel">
         <h2>Business Information</h2>
-
         <div class="kpi-grid">
-          <article class="kpi-card">
-            <h3>Total Revenue YOY</h3>
-            <p id="kpi-total-revenue-yoy">--</p>
-          </article>
-          <article class="kpi-card">
-            <h3>Total Visits YOY</h3>
-            <p id="kpi-total-visits-yoy">--</p>
-          </article>
-          <article class="kpi-card">
-            <h3>Avg Revenue / Visit YOY</h3>
-            <p id="kpi-avg-revenue-yoy">--</p>
-          </article>
-          <article class="kpi-card">
-            <h3>Avg Wait Time YOY</h3>
-            <p id="kpi-avg-wait-yoy">--</p>
-          </article>
+          <article class="kpi-card"><h3>Total Revenue YOY</h3><p id="kpi-total-revenue-yoy">--</p></article>
+          <article class="kpi-card"><h3>Total Visits YOY</h3><p id="kpi-total-visits-yoy">--</p></article>
+          <article class="kpi-card"><h3>Avg Revenue / Visit YOY</h3><p id="kpi-avg-revenue-yoy">--</p></article>
+          <article class="kpi-card"><h3>Avg Wait Time YOY</h3><p id="kpi-avg-wait-yoy">--</p></article>
         </div>
 
         <div id="business-chart-zone" class="chart-zone" data-zone-id="business-chart-zone">
           <article class="chart-card" draggable="true" data-card-id="total-revenue-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Total Revenue Trend</h3>
-                <p class="chart-explanation">Monthly revenue for the selected year. Revenue means food bill plus alcohol bill.</p>
-              </div>
-              <label>
-                Year
-                <select id="total-revenue-year-select"></select>
-              </label>
-            </div>
-            <div id="total-revenue-chart" class="chart-box"></div>
-            <p id="total-revenue-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Total Revenue Trend</h3><p class="chart-explanation">Monthly revenue for the selected year. Revenue means food bill plus alcohol bill.</p></div><label>Year<select id="total-revenue-year-select"></select></label></div>
+            <div id="total-revenue-chart" class="chart-box"></div><p id="total-revenue-note" class="chart-note">Above/below average note: --</p>
           </article>
-
           <article class="chart-card" draggable="true" data-card-id="total-visits-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Total Visits Trend</h3>
-                <p class="chart-explanation">Monthly visits for the selected year.</p>
-              </div>
-              <label>
-                Year
-                <select id="total-visits-year-select"></select>
-              </label>
-            </div>
-            <div id="total-visits-chart" class="chart-box"></div>
-            <p id="total-visits-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Total Visits Trend</h3><p class="chart-explanation">Monthly visits for the selected year.</p></div><label>Year<select id="total-visits-year-select"></select></label></div>
+            <div id="total-visits-chart" class="chart-box"></div><p id="total-visits-note" class="chart-note">Above/below average note: --</p>
           </article>
-
           <article class="chart-card" draggable="true" data-card-id="avg-revenue-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Average Revenue per Visit Trend</h3>
-                <p class="chart-explanation">Monthly average revenue per visit for the selected year.</p>
-              </div>
-              <label>
-                Year
-                <select id="avg-revenue-year-select"></select>
-              </label>
-            </div>
-            <div id="avg-revenue-chart" class="chart-box"></div>
-            <p id="avg-revenue-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Average Revenue per Visit Trend</h3><p class="chart-explanation">Monthly average revenue per visit for the selected year.</p></div><label>Year<select id="avg-revenue-year-select"></select></label></div>
+            <div id="avg-revenue-chart" class="chart-box"></div><p id="avg-revenue-note" class="chart-note">Above/below average note: --</p>
           </article>
-
           <article class="chart-card" draggable="true" data-card-id="avg-wait-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Average Wait Time Trend</h3>
-                <p class="chart-explanation">Monthly average wait time for the selected year.</p>
-              </div>
-              <label>
-                Year
-                <select id="avg-wait-year-select"></select>
-              </label>
-            </div>
-            <div id="avg-wait-chart" class="chart-box"></div>
-            <p id="avg-wait-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Average Wait Time Trend</h3><p class="chart-explanation">Monthly average wait time for the selected year.</p></div><label>Year<select id="avg-wait-year-select"></select></label></div>
+            <div id="avg-wait-chart" class="chart-box"></div><p id="avg-wait-note" class="chart-note">Above/below average note: --</p>
           </article>
-
           <article class="chart-card" draggable="true" data-card-id="restaurant-revenue-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Revenue by Each Restaurant YOY</h3>
-                <p class="chart-explanation">Stacked monthly revenue by restaurant. Select a year to compare restaurant contribution by month.</p>
-              </div>
-              <label>
-                Year
-                <select id="restaurant-year-select"></select>
-              </label>
-            </div>
-            <div id="restaurant-revenue-chart" class="chart-box"></div>
-            <p id="restaurant-revenue-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Revenue by Each Restaurant YOY</h3><p class="chart-explanation">Stacked monthly revenue by restaurant. Select a year to compare restaurant contribution by month.</p></div><label>Year<select id="restaurant-year-select"></select></label></div>
+            <div id="restaurant-revenue-chart" class="chart-box"></div><p id="restaurant-revenue-note" class="chart-note">Above/below average note: --</p>
           </article>
         </div>
       </section>
 
       <section class="dashboard-column panel">
         <h2>Customer-related Information</h2>
-
         <div class="kpi-grid">
-          <article class="kpi-card">
-            <h3>Known Customer Capture Rate</h3>
-            <p id="kpi-customer-capture-rate">--</p>
-          </article>
-          <article class="kpi-card">
-            <h3>Loyalty Member Revenue Share</h3>
-            <p id="kpi-loyalty-revenue-share">--</p>
-          </article>
+          <article class="kpi-card"><h3>Known Customer Capture Rate</h3><p id="kpi-customer-capture-rate">--</p></article>
+          <article class="kpi-card"><h3>Loyalty Member Revenue Share</h3><p id="kpi-loyalty-revenue-share">--</p></article>
         </div>
-
         <div id="customer-chart-zone" class="chart-zone" data-zone-id="customer-chart-zone">
           <article class="chart-card" draggable="true" data-card-id="customer-capture-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Customer Capture Trend</h3>
-                <p class="chart-explanation">Known customer capture rate = visits with cust_id divided by total visits.</p>
-              </div>
-              <label>
-                Year
-                <select id="customer-capture-year-select"></select>
-              </label>
-            </div>
-            <div id="customer-capture-chart" class="chart-box"></div>
-            <p id="customer-capture-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Customer Capture Trend</h3><p class="chart-explanation">Known customer capture rate = visits with cust_id divided by total visits.</p></div><label>Year<select id="customer-capture-year-select"></select></label></div>
+            <div id="customer-capture-chart" class="chart-box"></div><p id="customer-capture-note" class="chart-note">Above/below average note: --</p>
           </article>
-
           <article class="chart-card" draggable="true" data-card-id="loyalty-share-chart-card">
-            <div class="chart-card-header">
-              <div>
-                <h3>Loyalty Revenue Trend</h3>
-                <p class="chart-explanation">Loyalty member revenue share = loyalty member revenue divided by total revenue.</p>
-              </div>
-              <label>
-                Year
-                <select id="loyalty-share-year-select"></select>
-              </label>
-            </div>
-            <div id="loyalty-share-chart" class="chart-box"></div>
-            <p id="loyalty-share-note" class="chart-note">Above/below average note: --</p>
+            <div class="chart-card-header"><div><h3>Loyalty Revenue Trend</h3><p class="chart-explanation">Loyalty member revenue share = loyalty member revenue divided by total revenue.</p></div><label>Year<select id="loyalty-share-year-select"></select></label></div>
+            <div id="loyalty-share-chart" class="chart-box"></div><p id="loyalty-share-note" class="chart-note">Above/below average note: --</p>
           </article>
         </div>
       </section>
@@ -208,21 +114,9 @@
       <section class="dashboard-column panel">
         <h2>Server Performance Ranking</h2>
         <p class="chart-explanation">Server rankings exclude sensitive fields such as SSN, birth date, hourly rate, customer email, and customer phone.</p>
-
-        <article class="ranking-card">
-          <h3>Server Revenue Ranking</h3>
-          <div id="server-revenue-ranking"></div>
-        </article>
-
-        <article class="ranking-card">
-          <h3>Server Visit-count Ranking</h3>
-          <div id="server-visit-ranking"></div>
-        </article>
-
-        <article class="ranking-card">
-          <h3>Server Average Tip Percentage Ranking</h3>
-          <div id="server-tip-ranking"></div>
-        </article>
+        <article class="ranking-card"><h3>Server Revenue Ranking</h3><div id="server-revenue-ranking"></div></article>
+        <article class="ranking-card"><h3>Server Visit-count Ranking</h3><div id="server-visit-ranking"></div></article>
+        <article class="ranking-card"><h3>Server Average Tip Percentage Ranking</h3><div id="server-tip-ranking"></div></article>
       </section>
     </section>
   </main>
