@@ -454,7 +454,20 @@ function renderRestaurantTotalRanking() {
   const currentAll = allRows.filter((row) => row.year === year);
   const yearTotalRevenue = currentAll.reduce((sum, row) => sum + Number(row.totalRevenue || 0), 0);
 
-  const current = rankByYear(currentAll, year, "totalRevenue", 99);
+  const current = rankByYear(currentAll, year, "totalRevenue", 99)
+    .filter((row) => {
+      if (yearTotalRevenue === 0) {
+        return false;
+      }
+
+      const revenueShare = (Number(row.totalRevenue || 0) / yearTotalRevenue) * 100;
+      return revenueShare > 0;
+    })
+    .map((row, index) => ({
+      ...row,
+      rank: index + 1
+    }));
+
   const previous = rankByYear(allRows, year - 1, "totalRevenue", 99);
   const prevMap = new Map(previous.map((row) => [row.restaurantId, row.rank]));
 
@@ -475,11 +488,40 @@ function renderRestaurantTotalRanking() {
   );
 }
 
+function getRestaurantYoyAvailableYears() {
+  const allRows = annualRestaurantRows();
+  const years = [...new Set(allRows.map((row) => Number(row.year)).filter(Boolean))];
+
+  return years.filter((year) => {
+    if (year === Math.min(...years)) {
+      return false;
+    }
+
+    const current = rankByYear(allRows, year, "revenueYoyPercent", 99);
+    return current.some((row) => row.revenueYoyPercent !== null && Number(row.revenueYoyPercent) > -100);
+  });
+}
+
 function renderRestaurantYoyRanking() {
   const data = dashboardState.restaurantRevenue?.data;
   if (!data) return;
-  populateYearSelect("restaurant-ranking-year-select", data.years, renderRestaurantYoyRanking);
-  const year = Number(document.getElementById("restaurant-ranking-year-select").value);
+
+  const availableYears = getRestaurantYoyAvailableYears();
+  populateYearSelect("restaurant-ranking-year-select", availableYears, renderRestaurantYoyRanking);
+
+  const select = document.getElementById("restaurant-ranking-year-select");
+  const year = Number(select.value);
+
+  if (!year) {
+    renderSimpleRankingTable(
+      "restaurant-revenue-ranking",
+      [],
+      ["Rank", "Restaurant", "YOY"],
+      () => []
+    );
+    return;
+  }
+
   const allRows = annualRestaurantRows();
   const current = rankByYear(
     allRows.filter((row) => row.yoy === null || row.yoy > -99.995),
