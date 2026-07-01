@@ -63,9 +63,8 @@ select {
 }
 .control-description p { margin-bottom: 0; }
 .control-actions {
-  display: grid;
-  grid-template-columns: auto minmax(180px, 260px);
-  gap: 18px;
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 .button-row { display: grid; gap: 10px; }

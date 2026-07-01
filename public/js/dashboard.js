@@ -266,38 +266,27 @@ function renderHighlights() {
 
   if (topRestaurant) {
     addNameMetricItem(
-      "Top Restaurant performance: ",
+      "Best Restaurant performance: ",
       topRestaurant.restaurantName,
       topRestaurant.totalRevenue,
       formatMoney(topRestaurant.totalRevenue)
     );
   } else {
-    addNameMetricItem("Top Restaurant performance: ", "--", null, "--");
-  }
-
-  if (data.bestRestaurantYoy) {
-    addNameMetricItem(
-      "Top Restaurant performance YOY: ",
-      data.bestRestaurantYoy.restaurantName,
-      data.bestRestaurantYoy.revenueYoyPercent,
-      formatPercent(data.bestRestaurantYoy.revenueYoyPercent)
-    );
-  } else {
-    addNameMetricItem("Top Restaurant performance YOY: ", "--", null, "--");
+    addNameMetricItem("Best Restaurant performance: ", "--", null, "--");
   }
 
   const topServer = rankByYear(dashboardState.serverRankings?.data?.yearly || [], latestYear, "totalRevenue", 1)[0];
 
   if (topServer) {
     addNameMetricItem(
-      "Top Server's Revenue Contribution: ",
+      "Best Server's Revenue Contribution: ",
       topServer.serverName || `Server ${topServer.serverEmpId}`,
       topServer.totalRevenue,
       formatMoney(topServer.totalRevenue),
       ` at ${topServer.restaurantName || "--"}`
     );
   } else {
-    addNameMetricItem("Top Server's Revenue Contribution: ", "--", null, "--");
+    addNameMetricItem("Best Server's Revenue Contribution: ", "--", null, "--");
   }
 
   setText("today-date", holidays ? formatDate(holidays.today) : formatDate(new Date().toISOString().slice(0, 10)));
@@ -780,7 +769,7 @@ function renderServerRankings() {
 
 async function loadDashboardData() {
   const status = document.getElementById("dashboard-status");
-  status.textContent = "Loading dashboard data...";
+  if (status) status.textContent = "Loading dashboard data...";
   try {
     const [highlights, holidays, businessMetrics, restaurantRevenue, customerMetrics, serverRankings] = await Promise.all([
       fetchJson("/api/dashboard-highlights"), fetchJson("/api/date-holidays"), fetchJson("/api/yoy-business-metrics"), fetchJson("/api/restaurant-revenue-yoy"), fetchJson("/api/customer-yoy-metrics"), fetchJson("/api/server-rankings")
@@ -791,9 +780,13 @@ async function loadDashboardData() {
     renderKpis();
     setupGlobalYearSelect();
     renderYearControlledViews();
-    status.textContent = "Dashboard data loaded successfully.";
+    if (status) status.textContent = "Dashboard data loaded successfully.";
   } catch (error) {
-    status.textContent = `Dashboard data load failed: ${error.name === "AbortError" ? "Request timed out" : error.message}`;
+    if (status) {
+      status.textContent = `Dashboard data load failed: ${error.name === "AbortError" ? "Request timed out" : error.message}`;
+    } else {
+      console.error("Dashboard data load failed:", error);
+    }
   }
 }
 
@@ -817,6 +810,6 @@ function resetChartOrder() { Object.keys(localStorage).filter((k) => k.startsWit
 
 document.addEventListener("DOMContentLoaded", () => {
   setupDragAndDrop();
-  document.getElementById("load-dashboard-button").addEventListener("click", loadDashboardData);
   document.getElementById("reset-layout-button").addEventListener("click", resetChartOrder);
+  loadDashboardData();
 });
