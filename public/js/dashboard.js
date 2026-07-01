@@ -154,8 +154,8 @@ function renderKpis() {
   setMetricText("kpi-total-visits-yoy", data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange));
   setMetricText("kpi-avg-revenue-yoy", data.averageRevenuePerVisitYoy.percentChange, formatPercent(data.averageRevenuePerVisitYoy.percentChange));
   setMetricText("kpi-avg-wait-yoy", data.averageWaitTimeYoy.percentChange, formatPercent(data.averageWaitTimeYoy.percentChange));
-  const latest = customer ? latestNonNullMonth(customer.data.monthly, "knownCustomerCaptureRate") : null;
-  const loyalty = customer ? latestNonNullMonth(customer.data.monthly, "loyaltyMemberRevenueShare") : null;
+  const latest = customer?.monthly ? latestNonNullMonth(customer.monthly, "knownCustomerCaptureRate") : null;
+  const loyalty = customer?.monthly ? latestNonNullMonth(customer.monthly, "loyaltyMemberRevenueShare") : null;
   if (latest) setMetricText("kpi-customer-capture-rate", latest.knownCustomerCaptureRate, `${formatNumber(latest.knownCustomerCaptureRate, 2)}%`);
   if (loyalty) setMetricText("kpi-loyalty-revenue-share", loyalty.loyaltyMemberRevenueShare, `${formatNumber(loyalty.loyaltyMemberRevenueShare, 2)}%`);
 }

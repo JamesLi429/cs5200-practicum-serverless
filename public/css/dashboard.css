@@ -81,13 +81,18 @@ select {
 
 .main-dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   align-items: start;
 }
-.dashboard-column, .chart-zone, .chart-card, .ranking-card {
+.dashboard-column, .dashboard-stack, .chart-zone, .chart-card, .ranking-card {
   min-width: 0;
   max-width: 100%;
+}
+.dashboard-stack {
+  display: grid;
+  gap: 20px;
+  align-items: start;
 }
 
 .kpi-grid {
@@ -230,5 +235,5 @@ th { background: #f0f3f7; color: #334e68; }
     break-inside: avoid;
   }
   .main-dashboard-grid, .top-highlight-grid { display: block; }
-  .dashboard-column, .highlight-panel { margin-bottom: 16px; }
+  .dashboard-column, .dashboard-stack, .highlight-panel { margin-bottom: 16px; }
 }

@@ -134,6 +134,32 @@
         </div>
       </section>
 
+      <div class="dashboard-stack">
+      <section class="dashboard-column panel">
+        <h2>Restaurant Performance</h2>
+        <p class="chart-explanation">Restaurant rankings are based on annual revenue YOY change for the selected year.</p>
+
+        <article class="ranking-card">
+          <div class="ranking-header">
+            <h3>Restaurant Revenue Ranking</h3>
+            <label>Year<select id="restaurant-ranking-year-select"></select></label>
+          </div>
+          <div id="restaurant-revenue-ranking"></div>
+        </article>
+
+        <article class="chart-card" draggable="true" data-card-id="restaurant-revenue-chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h3>Revenue by Each Restaurant YOY</h3>
+              <p class="chart-explanation">Stacked monthly revenue by restaurant. Select a year to compare restaurant contribution by month.</p>
+            </div>
+            <label>Year<select id="restaurant-year-select"></select></label>
+          </div>
+          <div id="restaurant-revenue-chart" class="chart-box"></div>
+          <p id="restaurant-revenue-note" class="chart-note">Above/below average note: --</p>
+        </article>
+      </section>
+
       <section class="dashboard-column panel">
         <h2>Customer-related Information</h2>
 
@@ -175,30 +201,7 @@
         </div>
       </section>
 
-      <section class="dashboard-column panel">
-        <h2>Restaurant Performance</h2>
-        <p class="chart-explanation">Restaurant rankings are based on annual revenue YOY change for the selected year.</p>
-
-        <article class="ranking-card">
-          <div class="ranking-header">
-            <h3>Restaurant Revenue Ranking</h3>
-            <label>Year<select id="restaurant-ranking-year-select"></select></label>
-          </div>
-          <div id="restaurant-revenue-ranking"></div>
-        </article>
-
-        <article class="chart-card" draggable="true" data-card-id="restaurant-revenue-chart-card">
-          <div class="chart-card-header">
-            <div>
-              <h3>Revenue by Each Restaurant YOY</h3>
-              <p class="chart-explanation">Stacked monthly revenue by restaurant. Select a year to compare restaurant contribution by month.</p>
-            </div>
-            <label>Year<select id="restaurant-year-select"></select></label>
-          </div>
-          <div id="restaurant-revenue-chart" class="chart-box"></div>
-          <p id="restaurant-revenue-note" class="chart-note">Above/below average note: --</p>
-        </article>
-      </section>
+      </div>
 
       <section class="dashboard-column panel">
         <h2>Server Performance Ranking</h2>
