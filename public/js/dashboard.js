@@ -2,23 +2,23 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const COLORS = ["#1264a3", "#1f8f4d", "#d64545", "#8e44ad", "#e67e22", "#2f80ed", "#6c5ce7", "#00897b"];
 const DEFAULT_YEAR = 2025;
 
-const state = {
+const dashboardState = {
   highlights: null,
   holidays: null,
-  business: null,
-  restaurant: null,
-  customer: null,
-  server: null
+  businessMetrics: null,
+  restaurantRevenue: null,
+  customerMetrics: null,
+  serverRankings: null
 };
 
-const businessCharts = [
+const LINE_CHARTS = [
   ["total-revenue-year-select", "total-revenue-chart", "total-revenue-note", "totalRevenue", "Total revenue", "Selected year latest active month revenue", formatMoney],
   ["total-visits-year-select", "total-visits-chart", "total-visits-note", "totalVisits", "Total visits", "Selected year latest active month visits", (v) => formatNumber(v)],
   ["avg-revenue-year-select", "avg-revenue-chart", "avg-revenue-note", "averageRevenuePerVisit", "Average revenue per visit", "Selected year latest active month average revenue per visit", formatMoney],
   ["avg-wait-year-select", "avg-wait-chart", "avg-wait-note", "averageWaitTime", "Average wait time", "Selected year latest active month wait time", (v) => `${formatNumber(v, 2)} min`]
 ];
 
-const customerCharts = [
+const CUSTOMER_LINE_CHARTS = [
   ["customer-capture-year-select", "customer-capture-chart", "customer-capture-note", "knownCustomerCaptureRate", "Known customer capture rate", "Selected year latest active month customer capture rate", (v) => `${formatNumber(v, 2)}%`, true],
   ["loyalty-share-year-select", "loyalty-share-chart", "loyalty-share-note", "loyaltyMemberRevenueShare", "Loyalty member revenue share", "Selected year latest active month loyalty revenue share", (v) => `${formatNumber(v, 2)}%`, true]
 ];
@@ -39,33 +39,27 @@ function formatPercent(value) {
   return `${sign}${formatNumber(value, 2)}%`;
 }
 
+function metricClass(value) { return Number(value) < 0 ? "metric-negative" : "metric-positive"; }
+function metricSpan(value, text) { const s = document.createElement("span"); s.className = metricClass(value); s.textContent = text; return s; }
+function averageSpan(text) { const s = document.createElement("span"); s.className = "metric-average"; s.textContent = text; return s; }
+
+function setMetricText(id, value, text) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.innerHTML = "";
+  node.appendChild(metricSpan(value, text));
+}
+
 function formatDate(value) {
   if (!value) return "--";
   const date = new Date(`${value}T00:00:00Z`);
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
-function metricClass(value) {
-  return Number(value) < 0 ? "metric-negative" : "metric-positive";
-}
-
-function makeMetricSpan(value, text) {
-  const span = document.createElement("span");
-  span.className = metricClass(value);
-  span.textContent = text;
-  return span;
-}
-
-function setMetric(id, value, text) {
-  const node = document.getElementById(id);
-  if (!node) return;
-  node.innerHTML = "";
-  node.appendChild(makeMetricSpan(value, text));
-}
-
-function setText(id, text) {
-  const node = document.getElementById(id);
-  if (node) node.textContent = text;
+function shortMonthYear(value) {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00Z`);
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
 }
 
 async function fetchJson(endpoint, timeoutMs = 45000) {
@@ -80,210 +74,270 @@ async function fetchJson(endpoint, timeoutMs = 45000) {
   }
 }
 
-function chooseYear(years) {
-  return years.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : years[years.length - 1];
+function setText(id, value) { const node = document.getElementById(id); if (node) node.textContent = value; }
+
+function chooseDefaultYear(years) {
+  if (years.includes(DEFAULT_YEAR)) return DEFAULT_YEAR;
+  return years.length > 0 ? Math.max(...years) : "";
 }
 
-function populateYearSelect(id, years, onChange) {
-  const select = document.getElementById(id);
+function yearsDesc(years) { return [...years].sort((a, b) => b - a); }
+
+function populateYearSelect(selectId, years, onChange) {
+  const select = document.getElementById(selectId);
   if (!select) return;
-  const previous = Number(select.value);
+  const currentValue = select.value;
   select.innerHTML = "";
-  years.forEach((year) => {
+  yearsDesc(years).forEach((year) => {
     const option = document.createElement("option");
     option.value = String(year);
     option.textContent = String(year);
     select.appendChild(option);
   });
-  select.value = String(years.includes(previous) ? previous : chooseYear(years));
+  if (currentValue && years.includes(Number(currentValue))) select.value = currentValue;
+  else select.value = String(chooseDefaultYear(years));
   select.onchange = onChange;
 }
 
 function renderHighlights() {
-  const data = state.highlights?.data;
-  const holidays = state.holidays?.data;
+  const data = dashboardState.highlights?.data;
+  const holidays = dashboardState.holidays?.data;
   if (!data) return;
+
+  setText("latest-highlights-title", `Latest Business Highlights (${shortMonthYear(data.dataLastUpdated)})`);
 
   const list = document.getElementById("latest-highlights");
   list.innerHTML = "";
 
-  const revenueItem = document.createElement("li");
-  revenueItem.append("Total revenue YOY: ", makeMetricSpan(data.totalRevenueYoy.percentChange, formatPercent(data.totalRevenueYoy.percentChange)));
-  list.appendChild(revenueItem);
+  const rows = [
+    ["Total revenue YOY: ", data.totalRevenueYoy.percentChange, formatPercent(data.totalRevenueYoy.percentChange)],
+    ["Total visits YOY: ", data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange)]
+  ];
 
-  const visitItem = document.createElement("li");
-  visitItem.append("Total visits YOY: ", makeMetricSpan(data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange)));
-  list.appendChild(visitItem);
+  rows.forEach(([label, value, text]) => {
+    const li = document.createElement("li");
+    li.appendChild(document.createTextNode(label));
+    li.appendChild(metricSpan(value, text));
+    list.appendChild(li);
+  });
 
-  const bestItem = document.createElement("li");
+  const best = document.createElement("li");
   if (data.bestRestaurantYoy) {
-    bestItem.append(`Best restaurant YOY: ${data.bestRestaurantYoy.restaurantName}: `, makeMetricSpan(data.bestRestaurantYoy.revenueYoyPercent, formatPercent(data.bestRestaurantYoy.revenueYoyPercent)));
+    best.appendChild(document.createTextNode(`Best restaurant YOY: ${data.bestRestaurantYoy.restaurantName}: `));
+    best.appendChild(metricSpan(data.bestRestaurantYoy.revenueYoyPercent, formatPercent(data.bestRestaurantYoy.revenueYoyPercent)));
   } else {
-    bestItem.textContent = "Best restaurant YOY: --";
+    best.textContent = "Best restaurant YOY: --";
   }
-  list.appendChild(bestItem);
+  list.appendChild(best);
 
   setText("today-date", holidays ? formatDate(holidays.today) : formatDate(new Date().toISOString().slice(0, 10)));
   setText("data-last-updated", formatDate(data.dataLastUpdated));
 
   const holidayList = document.getElementById("holiday-list");
   holidayList.innerHTML = "";
-  (holidays?.upcomingHolidays || []).forEach((holiday) => {
-    const item = document.createElement("li");
-    item.textContent = `${holiday.name} - ${formatDate(holiday.date)}`;
-    holidayList.appendChild(item);
-  });
+  if (holidays?.upcomingHolidays) {
+    holidays.upcomingHolidays.forEach((holiday) => {
+      const item = document.createElement("li");
+      item.textContent = `${holiday.name} - ${formatDate(holiday.date)}`;
+      holidayList.appendChild(item);
+    });
+  }
 }
 
-function latestNonNull(rows, key) {
-  return [...rows].reverse().find((row) => row[key] !== null && row[key] !== undefined);
-}
+function latestNonNullMonth(rows, key) { return [...rows].reverse().find((row) => row[key] !== null && row[key] !== undefined) || null; }
 
 function renderKpis() {
-  const data = state.highlights?.data;
-  const customer = state.customer?.data;
+  const data = dashboardState.highlights?.data;
+  const customer = dashboardState.customerMetrics?.data;
   if (!data) return;
-  setMetric("kpi-total-revenue-yoy", data.totalRevenueYoy.percentChange, formatPercent(data.totalRevenueYoy.percentChange));
-  setMetric("kpi-total-visits-yoy", data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange));
-  setMetric("kpi-avg-revenue-yoy", data.averageRevenuePerVisitYoy.percentChange, formatPercent(data.averageRevenuePerVisitYoy.percentChange));
-  setMetric("kpi-avg-wait-yoy", data.averageWaitTimeYoy.percentChange, formatPercent(data.averageWaitTimeYoy.percentChange));
-
-  const capture = latestNonNull(customer?.monthly || [], "knownCustomerCaptureRate");
-  const loyalty = latestNonNull(customer?.monthly || [], "loyaltyMemberRevenueShare");
-  if (capture) setMetric("kpi-customer-capture-rate", capture.knownCustomerCaptureRate, `${formatNumber(capture.knownCustomerCaptureRate, 2)}%`);
-  if (loyalty) setMetric("kpi-loyalty-revenue-share", loyalty.loyaltyMemberRevenueShare, `${formatNumber(loyalty.loyaltyMemberRevenueShare, 2)}%`);
+  setMetricText("kpi-total-revenue-yoy", data.totalRevenueYoy.percentChange, formatPercent(data.totalRevenueYoy.percentChange));
+  setMetricText("kpi-total-visits-yoy", data.totalVisitsYoy.percentChange, formatPercent(data.totalVisitsYoy.percentChange));
+  setMetricText("kpi-avg-revenue-yoy", data.averageRevenuePerVisitYoy.percentChange, formatPercent(data.averageRevenuePerVisitYoy.percentChange));
+  setMetricText("kpi-avg-wait-yoy", data.averageWaitTimeYoy.percentChange, formatPercent(data.averageWaitTimeYoy.percentChange));
+  const latest = customer ? latestNonNullMonth(customer.data.monthly, "knownCustomerCaptureRate") : null;
+  const loyalty = customer ? latestNonNullMonth(customer.data.monthly, "loyaltyMemberRevenueShare") : null;
+  if (latest) setMetricText("kpi-customer-capture-rate", latest.knownCustomerCaptureRate, `${formatNumber(latest.knownCustomerCaptureRate, 2)}%`);
+  if (loyalty) setMetricText("kpi-loyalty-revenue-share", loyalty.loyaltyMemberRevenueShare, `${formatNumber(loyalty.loyaltyMemberRevenueShare, 2)}%`);
 }
 
-function getValuesForYear(rows, year, key) {
-  return MONTHS.map((_, index) => {
-    const row = rows.find((item) => item.year === year && item.month === index + 1);
-    return row ? row[key] : null;
+function getSingleYearValues(rows, metricKey, selectedYear) {
+  const rowsForYear = rows.filter((row) => row.year === selectedYear);
+  return MONTHS.map((_, monthIndex) => {
+    const row = rowsForYear.find((item) => item.month === monthIndex + 1);
+    return row ? row[metricKey] : null;
   });
 }
 
-function renderLineChart(containerId, label, values, options = {}) {
+function renderLineChart(containerId, label, values, color = COLORS[0], options = {}) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   const width = 640, height = 220;
   const margin = { top: 18, right: 18, bottom: 34, left: 54 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
-  const valid = values.filter((v) => v !== null && v !== undefined);
-  if (valid.length === 0) { container.textContent = "No data available."; return; }
-  const max = Math.max(...valid, 1);
-  const min = Math.min(0, ...valid);
-  const range = max - min || 1;
-  const x = (i) => margin.left + (i / 11) * chartWidth;
-  const y = (v) => margin.top + chartHeight - ((v - min) / range) * chartHeight;
+  const allValues = values.filter((value) => value !== null && value !== undefined);
+  if (allValues.length === 0) { container.textContent = "No data available."; return; }
+  const maxValue = Math.max(...allValues, 1);
+  const minValue = Math.min(0, ...allValues);
+  const range = maxValue - minValue || 1;
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("role", "img");
-
+  const xScale = (i) => margin.left + (i / 11) * chartWidth;
+  const yScale = (v) => margin.top + chartHeight - ((v - minValue) / range) * chartHeight;
   for (let i = 0; i < 5; i++) {
+    const y = margin.top + (i / 4) * chartHeight;
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    const yy = margin.top + (i / 4) * chartHeight;
     line.setAttribute("x1", margin.left); line.setAttribute("x2", margin.left + chartWidth);
-    line.setAttribute("y1", yy); line.setAttribute("y2", yy); line.setAttribute("stroke", "#d9e2ec");
+    line.setAttribute("y1", y); line.setAttribute("y2", y); line.setAttribute("stroke", "#d9e2ec");
     svg.appendChild(line);
   }
-
-  MONTHS.forEach((month, i) => {
+  MONTHS.forEach((month, index) => {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", x(i)); text.setAttribute("y", height - 12); text.setAttribute("text-anchor", "middle"); text.setAttribute("font-size", "11"); text.textContent = month;
+    text.setAttribute("x", xScale(index)); text.setAttribute("y", height - 12);
+    text.setAttribute("text-anchor", "middle"); text.setAttribute("font-size", "11"); text.textContent = month;
     svg.appendChild(text);
   });
-
   for (let i = 0; i <= 4; i++) {
-    const val = max - (i / 4) * range;
+    const value = maxValue - (i / 4) * range;
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", margin.left - 8); text.setAttribute("y", margin.top + (i / 4) * chartHeight + 4); text.setAttribute("text-anchor", "end"); text.setAttribute("font-size", "10");
-    text.textContent = options.percent ? `${formatNumber(val, 0)}%` : formatNumber(val, 0);
+    text.setAttribute("x", margin.left - 8); text.setAttribute("y", margin.top + (i / 4) * chartHeight + 4);
+    text.setAttribute("text-anchor", "end"); text.setAttribute("font-size", "10");
+    text.textContent = options.percent ? `${formatNumber(value, 0)}%` : formatNumber(value, 0);
     svg.appendChild(text);
   }
-
-  const points = values.map((v, i) => v === null || v === undefined ? null : `${x(i)},${y(v)}`).filter(Boolean).join(" ");
+  const points = values.map((value, index) => value === null || value === undefined ? null : `${xScale(index)},${yScale(value)}`).filter(Boolean).join(" ");
   const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-  polyline.setAttribute("fill", "none"); polyline.setAttribute("stroke", COLORS[0]); polyline.setAttribute("stroke-width", "3"); polyline.setAttribute("points", points);
+  polyline.setAttribute("fill", "none"); polyline.setAttribute("stroke", color); polyline.setAttribute("stroke-width", "3"); polyline.setAttribute("points", points);
   svg.appendChild(polyline);
-  values.forEach((v, i) => {
-    if (v === null || v === undefined) return;
+  values.forEach((value, index) => {
+    if (value === null || value === undefined) return;
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", x(i)); circle.setAttribute("cy", y(v)); circle.setAttribute("r", "3.2"); circle.setAttribute("fill", COLORS[0]);
+    circle.setAttribute("cx", xScale(index)); circle.setAttribute("cy", yScale(value)); circle.setAttribute("r", "4"); circle.setAttribute("fill", color);
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = options.formatter ? options.formatter(value) : String(value);
+    circle.appendChild(title);
     svg.appendChild(circle);
   });
-
   container.appendChild(svg);
-  container.appendChild(createLegend([{ label, color: COLORS[0] }]));
+  container.appendChild(createLegend([{ label, color }]));
 }
 
-function createLegend(items) {
-  const legend = document.createElement("div");
-  legend.className = "legend";
-  items.forEach((item) => {
-    const span = document.createElement("span");
-    span.className = "legend-item";
-    const swatch = document.createElement("span");
-    swatch.className = "legend-swatch";
-    swatch.style.background = item.color;
-    span.append(swatch, document.createTextNode(item.label));
-    legend.appendChild(span);
+function createLegend(series) {
+  const legend = document.createElement("div"); legend.className = "legend";
+  series.forEach((item) => {
+    const label = document.createElement("span"); label.className = "legend-item";
+    const swatch = document.createElement("span"); swatch.className = "legend-swatch"; swatch.style.background = item.color;
+    label.appendChild(swatch); label.appendChild(document.createTextNode(item.label)); legend.appendChild(label);
   });
   return legend;
 }
 
-function setAverageNote(noteId, latest, average, label, formatter) {
-  const node = document.getElementById(noteId);
-  node.innerHTML = "";
-  if (!average || latest === null || latest === undefined) { node.textContent = `${label}: not enough data for comparison.`; return; }
-  const diff = ((latest - average) / average) * 100;
-  const direction = diff >= 0 ? "above" : "below";
-  node.append(`${label}: `, makeMetricSpan(diff, `${formatNumber(Math.abs(diff), 2)}%`), ` ${direction} the average, `, makeMetricSpan(average, formatter(average)), ".");
-}
-
-function updateLineNote(noteId, rows, key, label, year, formatter) {
-  const rowsForYear = rows.filter((r) => r.year === year);
-  const values = rowsForYear.map((r) => r[key]).filter((v) => v !== null && v !== undefined && Number(v) !== 0);
-  const latest = [...rowsForYear].reverse().find((r) => r[key] !== null && r[key] !== undefined && Number(r[key]) !== 0);
-  if (!latest || values.length === 0) { setText(noteId, `${label}: not enough data for comparison.`); return; }
-  const average = values.reduce((sum, v) => sum + Number(v), 0) / values.length;
-  setAverageNote(noteId, Number(latest[key]), average, label, formatter);
-}
-
 function renderBusinessCharts() {
-  const data = state.business?.data;
+  const data = dashboardState.businessMetrics?.data;
   if (!data) return;
-  businessCharts.forEach(([selectId, chartId, noteId, key, label, noteLabel, formatter]) => {
+  LINE_CHARTS.forEach(([selectId, chartId, noteId, metricKey, label, noteLabel, formatter]) => {
     populateYearSelect(selectId, data.years, renderBusinessCharts);
     const year = Number(document.getElementById(selectId).value);
-    renderLineChart(chartId, `${label} ${year}`, getValuesForYear(data.monthly, year, key));
-    updateLineNote(noteId, data.monthly, key, noteLabel, year, formatter);
+    const values = getSingleYearValues(data.monthly, metricKey, year);
+    renderLineChart(chartId, `${label} ${year}`, values, COLORS[0], { formatter });
+    updateLineNote(noteId, data.monthly, metricKey, noteLabel, year, formatter);
   });
 }
 
 function renderCustomerCharts() {
-  const data = state.customer?.data;
+  const data = dashboardState.customerMetrics?.data;
   if (!data) return;
-  customerCharts.forEach(([selectId, chartId, noteId, key, label, noteLabel, formatter, percent]) => {
+  CUSTOMER_LINE_CHARTS.forEach(([selectId, chartId, noteId, metricKey, label, noteLabel, formatter, percent], index) => {
     populateYearSelect(selectId, data.years, renderCustomerCharts);
     const year = Number(document.getElementById(selectId).value);
-    renderLineChart(chartId, `${label} ${year}`, getValuesForYear(data.monthly, year, key), { percent });
-    updateLineNote(noteId, data.monthly, key, noteLabel, year, formatter);
+    const values = getSingleYearValues(data.monthly, metricKey, year);
+    renderLineChart(chartId, `${label} ${year}`, values, COLORS[index], { percent, formatter });
+    updateLineNote(noteId, data.monthly, metricKey, noteLabel, year, formatter);
   });
 }
 
-function renderRestaurantChart() {
-  const data = state.restaurant?.data;
+function setAverageNote(noteId, latestValue, averageValue, label, formatter) {
+  const node = document.getElementById(noteId);
+  if (!node) return;
+  node.innerHTML = "";
+  if (averageValue === null || averageValue === undefined || averageValue === 0 || latestValue === null || latestValue === undefined) {
+    node.textContent = `${label}: not enough data for comparison.`;
+    return;
+  }
+  const diff = ((latestValue - averageValue) / averageValue) * 100;
+  const direction = diff >= 0 ? "above" : "below";
+  node.appendChild(document.createTextNode(`${label}: `));
+  node.appendChild(metricSpan(diff, `${formatNumber(Math.abs(diff), 2)}%`));
+  node.appendChild(document.createTextNode(` ${direction} the average, `));
+  node.appendChild(averageSpan(formatter(averageValue)));
+  node.appendChild(document.createTextNode("."));
+}
+
+function updateLineNote(noteId, rows, metricKey, label, selectedYear, formatter) {
+  const rowsForYear = rows.filter((row) => row.year === selectedYear);
+  const values = rowsForYear.map((row) => row[metricKey]).filter((v) => v !== null && v !== undefined && Number(v) !== 0);
+  const latest = [...rowsForYear].reverse().find((row) => row[metricKey] !== null && row[metricKey] !== undefined && Number(row[metricKey]) !== 0);
+  if (!latest || values.length === 0) { setText(noteId, `${label}: not enough data for comparison.`); return; }
+  const average = values.reduce((sum, value) => sum + Number(value), 0) / values.length;
+  setAverageNote(noteId, Number(latest[metricKey]), average, label, formatter);
+}
+
+function annualRestaurantRows() {
+  const data = dashboardState.restaurantRevenue?.data;
+  if (!data) return [];
+  const rows = [];
+  data.years.forEach((year) => {
+    data.restaurants.forEach((restaurant) => {
+      const total = data.monthly.filter((m) => m.year === year).reduce((sum, m) => sum + Number(m.restaurantRevenue[restaurant.restaurantId] || 0), 0);
+      const prevTotal = data.monthly.filter((m) => m.year === year - 1).reduce((sum, m) => sum + Number(m.restaurantRevenue[restaurant.restaurantId] || 0), 0);
+      const yoy = prevTotal === 0 ? null : ((total - prevTotal) / prevTotal) * 100;
+      rows.push({ year, restaurantId: restaurant.restaurantId, restaurantName: restaurant.restaurantName, totalRevenue: total, yoy });
+    });
+  });
+  return rows;
+}
+
+function rankByYear(rows, year, key, limit = 10) {
+  return rows.filter((r) => r.year === year && r[key] !== null && r[key] !== undefined)
+    .sort((a, b) => Number(b[key]) - Number(a[key]))
+    .slice(0, limit)
+    .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function rankChangeSign(currentRank, previousRank, year) {
+  if (year === 2018 || !previousRank) return "";
+  const change = previousRank - currentRank;
+  if (change > 0) return " 🟢⬆️";
+  if (change < 0) return " 🔴⬇️";
+  return " ⚪➖";
+}
+
+function renderRestaurantRanking() {
+  const data = dashboardState.restaurantRevenue?.data;
+  if (!data) return;
+  populateYearSelect("restaurant-ranking-year-select", data.years, renderRestaurantRanking);
+  const year = Number(document.getElementById("restaurant-ranking-year-select").value);
+  const allRows = annualRestaurantRows();
+  const current = rankByYear(allRows, year, "yoy", 10);
+  const previous = rankByYear(allRows, year - 1, "yoy", 99);
+  const prevMap = new Map(previous.map((row) => [row.restaurantId, row.rank]));
+  renderSimpleRankingTable("restaurant-revenue-ranking", current, ["Rank", "Restaurant", "YOY"], (row) => [
+    `${row.rank}${rankChangeSign(row.rank, prevMap.get(row.restaurantId), year)}`,
+    row.restaurantName,
+    formatPercent(row.yoy)
+  ]);
+}
+
+function renderStackedRestaurantChart() {
+  const data = dashboardState.restaurantRevenue?.data;
   if (!data || data.years.length === 0) return;
   const select = document.getElementById("restaurant-year-select");
   if (select.options.length === 0) {
-    data.years.forEach((year) => {
-      const option = document.createElement("option"); option.value = String(year); option.textContent = String(year); select.appendChild(option);
-    });
-    select.value = String(chooseYear(data.years));
-    select.addEventListener("change", renderRestaurantChart);
+    populateYearSelect("restaurant-year-select", data.years, renderStackedRestaurantChart);
   }
-  const year = Number(select.value);
-  const rows = data.monthly.filter((r) => r.year === year);
+  const selectedYear = Number(select.value);
+  const rows = data.monthly.filter((row) => row.year === selectedYear);
   const restaurants = data.restaurants;
   const container = document.getElementById("restaurant-revenue-chart");
   container.innerHTML = "";
@@ -291,86 +345,91 @@ function renderRestaurantChart() {
   const margin = { top: 18, right: 18, bottom: 34, left: 54 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
-  const totals = rows.map((row) => restaurants.reduce((s, r) => s + Number(row.restaurantRevenue[r.restaurantId] || 0), 0));
-  const max = Math.max(...totals, 1);
+  const totals = rows.map((row) => restaurants.reduce((sum, r) => sum + Number(row.restaurantRevenue[r.restaurantId] || 0), 0));
+  const maxTotal = Math.max(...totals, 1);
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.setAttribute("role", "img");
   const barWidth = chartWidth / 12 * 0.68;
-
   rows.forEach((row, monthIndex) => {
-    const barX = margin.left + monthIndex * (chartWidth / 12) + (chartWidth / 12 - barWidth) / 2;
-    let currentY = margin.top + chartHeight;
-    restaurants.forEach((restaurant, rIndex) => {
+    const x = margin.left + monthIndex * (chartWidth / 12) + (chartWidth / 12 - barWidth) / 2;
+    let y = margin.top + chartHeight;
+    restaurants.forEach((restaurant, i) => {
       const value = Number(row.restaurantRevenue[restaurant.restaurantId] || 0);
-      const barHeight = (value / max) * chartHeight;
+      const h = (value / maxTotal) * chartHeight;
       const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", barX); rect.setAttribute("y", currentY - barHeight); rect.setAttribute("width", barWidth); rect.setAttribute("height", barHeight); rect.setAttribute("fill", COLORS[rIndex % COLORS.length]);
+      rect.setAttribute("x", x); rect.setAttribute("y", y - h); rect.setAttribute("width", barWidth); rect.setAttribute("height", h); rect.setAttribute("fill", COLORS[i % COLORS.length]);
       const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
       title.textContent = `${restaurant.restaurantName}: ${formatMoney(value)}`;
       rect.appendChild(title);
       svg.appendChild(rect);
-      currentY -= barHeight;
+      y -= h;
     });
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", barX + barWidth / 2); text.setAttribute("y", height - 12); text.setAttribute("text-anchor", "middle"); text.setAttribute("font-size", "11"); text.textContent = MONTHS[monthIndex];
+    text.setAttribute("x", x + barWidth / 2); text.setAttribute("y", height - 12); text.setAttribute("text-anchor", "middle"); text.setAttribute("font-size", "11"); text.textContent = MONTHS[monthIndex];
     svg.appendChild(text);
   });
-
   for (let i = 0; i <= 4; i++) {
-    const value = max - (i / 4) * max;
+    const value = maxTotal - (i / 4) * maxTotal;
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", margin.left - 8); text.setAttribute("y", margin.top + (i / 4) * chartHeight + 4); text.setAttribute("text-anchor", "end"); text.setAttribute("font-size", "10"); text.textContent = formatNumber(value, 0);
     svg.appendChild(text);
   }
-
   container.appendChild(svg);
   container.appendChild(createLegend(restaurants.map((r, i) => ({ label: r.restaurantName, color: COLORS[i % COLORS.length] }))));
-  const average = totals.reduce((s, v) => s + v, 0) / Math.max(totals.length, 1);
+  const avg = totals.reduce((s, v) => s + v, 0) / Math.max(totals.length, 1);
   const latest = [...totals].reverse().find((v) => v > 0) || 0;
-  setAverageNote("restaurant-revenue-note", latest, average, "Selected year latest active month revenue", formatMoney);
+  setAverageNote("restaurant-revenue-note", latest, avg, "Selected year latest active month revenue", formatMoney);
 }
 
-function renderRankingTable(containerId, rows, valueKey, formatter) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
+function renderSimpleRankingTable(containerId, rows, headers, valueGetter) {
+  const container = document.getElementById(containerId); container.innerHTML = "";
   const wrap = document.createElement("div"); wrap.className = "table-wrap";
   const table = document.createElement("table");
-  table.innerHTML = "<thead><tr><th>Rank</th><th>Server</th><th>Restaurant</th><th class='text-right'>Value</th></tr></thead>";
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  headers.forEach((h) => { const th = document.createElement("th"); th.textContent = h; headRow.appendChild(th); });
+  thead.appendChild(headRow); table.appendChild(thead);
   const tbody = document.createElement("tbody");
   rows.forEach((row) => {
     const tr = document.createElement("tr");
-    [[row.rank, ""], [row.serverName || `Server ${row.serverEmpId}`, ""], [row.restaurantName || "--", ""], [formatter(row[valueKey]), "text-right"]].forEach(([text, cls]) => {
-      const td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; tr.appendChild(td);
-    });
+    valueGetter(row).forEach((v, i) => { const td = document.createElement("td"); if (i === valueGetter(row).length - 1) td.className = "text-right"; td.textContent = v; tr.appendChild(td); });
     tbody.appendChild(tr);
   });
   table.appendChild(tbody); wrap.appendChild(table); container.appendChild(wrap);
 }
 
-function renderServerRankings() {
-  const data = state.server?.data;
+function renderServerRanking(containerId, selectId, key, formatter) {
+  const data = dashboardState.serverRankings?.data;
   if (!data) return;
-  renderRankingTable("server-revenue-ranking", data.revenueRanking, "totalRevenue", formatMoney);
-  renderRankingTable("server-visit-ranking", data.visitCountRanking, "visitCount", (v) => formatNumber(v));
-  renderRankingTable("server-tip-ranking", data.averageTipPercentRanking, "averageTipPercent", (v) => `${formatNumber(v, 2)}%`);
+  populateYearSelect(selectId, data.years, () => renderServerRankings());
+  const year = Number(document.getElementById(selectId).value);
+  const current = rankByYear(data.yearly, year, key, 10);
+  const previous = rankByYear(data.yearly, year - 1, key, 99);
+  const prevMap = new Map(previous.map((row) => [row.serverEmpId, row.rank]));
+  renderSimpleRankingTable(containerId, current, ["Rank", "Server", "Restaurant", "Value"], (row) => [
+    `${row.rank}${rankChangeSign(row.rank, prevMap.get(row.serverEmpId), year)}`,
+    row.serverName || `Server ${row.serverEmpId}`,
+    row.restaurantName || "--",
+    formatter(row[key])
+  ]);
+}
+
+function renderServerRankings() {
+  renderServerRanking("server-revenue-ranking", "server-revenue-year-select", "totalRevenue", formatMoney);
+  renderServerRanking("server-visit-ranking", "server-visit-year-select", "visitCount", (v) => formatNumber(v));
+  renderServerRanking("server-tip-ranking", "server-tip-year-select", "averageTipPercent", (v) => `${formatNumber(v, 2)}%`);
 }
 
 async function loadDashboardData() {
   const status = document.getElementById("dashboard-status");
   status.textContent = "Loading dashboard data...";
   try {
-    const [highlights, holidays, business, restaurant, customer, server] = await Promise.all([
-      fetchJson("/api/dashboard-highlights"),
-      fetchJson("/api/date-holidays"),
-      fetchJson("/api/yoy-business-metrics"),
-      fetchJson("/api/restaurant-revenue-yoy"),
-      fetchJson("/api/customer-yoy-metrics"),
-      fetchJson("/api/server-rankings")
+    const [highlights, holidays, businessMetrics, restaurantRevenue, customerMetrics, serverRankings] = await Promise.all([
+      fetchJson("/api/dashboard-highlights"), fetchJson("/api/date-holidays"), fetchJson("/api/yoy-business-metrics"), fetchJson("/api/restaurant-revenue-yoy"), fetchJson("/api/customer-yoy-metrics"), fetchJson("/api/server-rankings")
     ]);
-    if ([highlights, holidays, business, restaurant, customer, server].some((r) => r.ok !== true)) throw new Error("At least one dashboard API returned ok=false.");
-    Object.assign(state, { highlights, holidays, business, restaurant, customer, server });
-    renderHighlights(); renderKpis(); renderBusinessCharts(); renderRestaurantChart(); renderCustomerCharts(); renderServerRankings();
+    if ([highlights, holidays, businessMetrics, restaurantRevenue, customerMetrics, serverRankings].some((r) => r.ok !== true)) throw new Error("At least one dashboard API returned ok=false.");
+    dashboardState.highlights = highlights; dashboardState.holidays = holidays; dashboardState.businessMetrics = businessMetrics; dashboardState.restaurantRevenue = restaurantRevenue; dashboardState.customerMetrics = customerMetrics; dashboardState.serverRankings = serverRankings;
+    renderHighlights(); renderKpis(); renderBusinessCharts(); renderCustomerCharts(); renderRestaurantRanking(); renderStackedRestaurantChart(); renderServerRankings();
     status.textContent = "Dashboard data loaded successfully.";
   } catch (error) {
     status.textContent = `Dashboard data load failed: ${error.name === "AbortError" ? "Request timed out" : error.message}`;
@@ -380,40 +439,20 @@ async function loadDashboardData() {
 function setupDragAndDrop() {
   document.querySelectorAll(".chart-zone").forEach((zone) => {
     restoreZoneOrder(zone);
-    zone.addEventListener("dragstart", (event) => {
-      const card = event.target.closest(".chart-card"); if (!card) return;
-      card.classList.add("dragging"); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", card.dataset.cardId);
-    });
+    zone.addEventListener("dragstart", (event) => { const card = event.target.closest(".chart-card"); if (!card) return; card.classList.add("dragging"); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", card.dataset.cardId); });
     zone.addEventListener("dragend", (event) => { const card = event.target.closest(".chart-card"); if (card) card.classList.remove("dragging"); saveZoneOrder(zone); });
-    zone.addEventListener("dragover", (event) => {
-      event.preventDefault(); const dragging = zone.querySelector(".dragging"); if (!dragging) return;
-      const after = getDragAfterElement(zone, event.clientY); if (after == null) zone.appendChild(dragging); else zone.insertBefore(dragging, after);
-    });
+    zone.addEventListener("dragover", (event) => { event.preventDefault(); const dragging = zone.querySelector(".dragging"); if (!dragging) return; const after = getDragAfterElement(zone, event.clientY); if (after == null) zone.appendChild(dragging); else zone.insertBefore(dragging, after); });
   });
 }
-
 function getDragAfterElement(container, y) {
-  return [...container.querySelectorAll(".chart-card:not(.dragging)")].reduce((closest, child) => {
-    const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
-    return offset < 0 && offset > closest.offset ? { offset, element: child } : closest;
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
+  return [...container.querySelectorAll(".chart-card:not(.dragging)")].reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; return offset < 0 && offset > closest.offset ? { offset, element: child } : closest; }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
-
-function saveZoneOrder(zone) {
-  localStorage.setItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`, JSON.stringify([...zone.querySelectorAll(".chart-card")].map((c) => c.dataset.cardId)));
-}
-
+function saveZoneOrder(zone) { localStorage.setItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`, JSON.stringify([...zone.querySelectorAll(".chart-card")].map((card) => card.dataset.cardId))); }
 function restoreZoneOrder(zone) {
-  const saved = localStorage.getItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`);
-  if (!saved) return;
-  try { JSON.parse(saved).forEach((id) => { const card = zone.querySelector(`[data-card-id="${id}"]`); if (card) zone.appendChild(card); }); }
-  catch { localStorage.removeItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`); }
+  const saved = localStorage.getItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`); if (!saved) return;
+  try { JSON.parse(saved).forEach((id) => { const card = zone.querySelector(`[data-card-id="${id}"]`); if (card) zone.appendChild(card); }); } catch { localStorage.removeItem(`cs5200-dashboard-order-${zone.dataset.zoneId}`); }
 }
-
-function resetChartOrder() {
-  Object.keys(localStorage).filter((key) => key.startsWith("cs5200-dashboard-order-")).forEach((key) => localStorage.removeItem(key));
-  window.location.reload();
-}
+function resetChartOrder() { Object.keys(localStorage).filter((k) => k.startsWith("cs5200-dashboard-order-")).forEach((k) => localStorage.removeItem(k)); window.location.reload(); }
 
 document.addEventListener("DOMContentLoaded", () => {
   setupDragAndDrop();
