@@ -261,14 +261,16 @@ function setAverageNote(noteId, latestValue, averageValue, label, formatter) {
   const node = document.getElementById(noteId);
   if (!node) return;
   node.innerHTML = "";
-  if (averageValue === null || averageValue === undefined || averageValue === 0 || latestValue === null || latestValue === undefined) {
+  if (averageValue === null || averageValue === undefined || latestValue === null || latestValue === undefined) {
     node.textContent = `${label}: not enough data for comparison.`;
     return;
   }
-  const diff = ((latestValue - averageValue) / averageValue) * 100;
+
+  const diff = Number(latestValue) - Number(averageValue);
   const direction = diff >= 0 ? "above" : "below";
+
   node.appendChild(document.createTextNode(`${label}: `));
-  node.appendChild(metricSpan(diff, `${formatNumber(Math.abs(diff), 2)}%`));
+  node.appendChild(metricSpan(diff, formatter(latestValue)));
   node.appendChild(document.createTextNode(` ${direction} the average, `));
   node.appendChild(averageSpan(formatter(averageValue)));
   node.appendChild(document.createTextNode("."));
