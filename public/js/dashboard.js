@@ -305,12 +305,36 @@ function rankByYear(rows, year, key, limit = 10) {
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
-function rankChangeSign(currentRank, previousRank, year) {
-  if (year === 2018 || !previousRank) return "";
-  const change = previousRank - currentRank;
-  if (change > 0) return " 🟢⬆️";
-  if (change < 0) return " 🔴⬇️";
-  return " ⚪➖";
+function rankChangeValue(currentRank, previousRank, year) {
+  if (year === 2018 || previousRank === null || previousRank === undefined) {
+    return null;
+  }
+
+  return (currentRank - previousRank) * -1;
+}
+
+function createRankContent(currentRank, previousRank, year) {
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(document.createTextNode(String(currentRank)));
+
+  const change = rankChangeValue(currentRank, previousRank, year);
+
+  if (change === null) {
+    return fragment;
+  }
+
+  const changeSpan = document.createElement("span");
+  changeSpan.className = `rank-change ${metricClass(change)}`;
+  changeSpan.textContent = ` (${change >= 0 ? "+" : ""}${change})`;
+
+  fragment.appendChild(changeSpan);
+  return fragment;
+}
+
+function createMetricCell(value, displayValue) {
+  const fragment = document.createDocumentFragment();
+  fragment.appendChild(metricSpan(value, displayValue));
+  return fragment;
 }
 
 function renderRestaurantRanking() {
@@ -322,11 +346,51 @@ function renderRestaurantRanking() {
   const current = rankByYear(allRows, year, "yoy", 10);
   const previous = rankByYear(allRows, year - 1, "yoy", 99);
   const prevMap = new Map(previous.map((row) => [row.restaurantId, row.rank]));
-  renderSimpleRankingTable("restaurant-revenue-ranking", current, ["Rank", "Restaurant", "YOY"], (row) => [
-    `${row.rank}${rankChangeSign(row.rank, prevMap.get(row.restaurantId), year)}`,
-    row.restaurantName,
-    formatPercent(row.yoy)
-  ]);
+
+  renderSimpleRankingTable(
+    "restaurant-revenue-ranking",
+    current,
+    ["Rank", "Restaurant", "YOY"],
+    (row) => [
+      createRankContent(row.rank, prevMap.get(row.restaurantId), year),
+      row.restaurantName,
+      createMetricCell(row.yoy, formatPercent(row.yoy))
+    ],
+    { rightAlignLast: false }
+  );
+}
+
+function monthlyRestaurantTotalsForYear(year) {
+  const data = dashboardState.restaurantRevenue?.data;
+  if (!data) return [];
+
+  return MONTHS.map((_, monthIndex) => {
+    const row = data.monthly.find((item) => item.year === year && item.month === monthIndex + 1);
+
+    if (!row) {
+      return null;
+    }
+
+    return data.restaurants.reduce(
+      (sum, restaurant) => sum + Number(row.restaurantRevenue[restaurant.restaurantId] || 0),
+      0
+    );
+  });
+}
+
+function monthlyRestaurantYoyPercentages(year) {
+  const currentTotals = monthlyRestaurantTotalsForYear(year);
+  const previousTotals = monthlyRestaurantTotalsForYear(year - 1);
+
+  return currentTotals.map((currentTotal, index) => {
+    const previousTotal = previousTotals[index];
+
+    if (currentTotal === null || previousTotal === null || previousTotal === 0) {
+      return null;
+    }
+
+    return ((currentTotal - previousTotal) / previousTotal) * 100;
+  });
 }
 
 function renderStackedRestaurantChart() {
@@ -376,12 +440,35 @@ function renderStackedRestaurantChart() {
   }
   container.appendChild(svg);
   container.appendChild(createLegend(restaurants.map((r, i) => ({ label: r.restaurantName, color: COLORS[i % COLORS.length] }))));
-  const avg = totals.reduce((s, v) => s + v, 0) / Math.max(totals.length, 1);
-  const latest = [...totals].reverse().find((v) => v > 0) || 0;
-  setAverageNote("restaurant-revenue-note", latest, avg, "Selected year latest active month revenue", formatMoney);
+
+  const yoyValues = monthlyRestaurantYoyPercentages(selectedYear).filter((value) => value !== null && value !== undefined);
+  const latestYoy = [...monthlyRestaurantYoyPercentages(selectedYear)].reverse().find((value) => value !== null && value !== undefined);
+
+  if (latestYoy === undefined || yoyValues.length === 0) {
+    setText("restaurant-revenue-note", "Selected year latest active month restaurant revenue YOY: not enough data for comparison.");
+    return;
+  }
+
+  const averageYoy = yoyValues.reduce((sum, value) => sum + Number(value), 0) / yoyValues.length;
+  setAverageNote(
+    "restaurant-revenue-note",
+    latestYoy,
+    averageYoy,
+    "Selected year latest active month restaurant revenue YOY",
+    (value) => `${formatNumber(value, 2)}%`
+  );
 }
 
-function renderSimpleRankingTable(containerId, rows, headers, valueGetter) {
+function appendCellContent(cell, value) {
+  if (value instanceof Node) {
+    cell.appendChild(value);
+    return;
+  }
+
+  cell.textContent = value;
+}
+
+function renderSimpleRankingTable(containerId, rows, headers, valueGetter, options = {}) {
   const container = document.getElementById(containerId); container.innerHTML = "";
   const wrap = document.createElement("div"); wrap.className = "table-wrap";
   const table = document.createElement("table");
@@ -392,7 +479,17 @@ function renderSimpleRankingTable(containerId, rows, headers, valueGetter) {
   const tbody = document.createElement("tbody");
   rows.forEach((row) => {
     const tr = document.createElement("tr");
-    valueGetter(row).forEach((v, i) => { const td = document.createElement("td"); if (i === valueGetter(row).length - 1) td.className = "text-right"; td.textContent = v; tr.appendChild(td); });
+    const values = valueGetter(row);
+    values.forEach((v, i) => {
+      const td = document.createElement("td");
+
+      if (options.rightAlignLast !== false && i === values.length - 1) {
+        td.className = "text-right";
+      }
+
+      appendCellContent(td, v);
+      tr.appendChild(td);
+    });
     tbody.appendChild(tr);
   });
   table.appendChild(tbody); wrap.appendChild(table); container.appendChild(wrap);
@@ -407,7 +504,7 @@ function renderServerRanking(containerId, selectId, key, formatter) {
   const previous = rankByYear(data.yearly, year - 1, key, 99);
   const prevMap = new Map(previous.map((row) => [row.serverEmpId, row.rank]));
   renderSimpleRankingTable(containerId, current, ["Rank", "Server", "Restaurant", "Value"], (row) => [
-    `${row.rank}${rankChangeSign(row.rank, prevMap.get(row.serverEmpId), year)}`,
+    createRankContent(row.rank, prevMap.get(row.serverEmpId), year),
     row.serverName || `Server ${row.serverEmpId}`,
     row.restaurantName || "--",
     formatter(row[key])
