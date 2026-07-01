@@ -12,6 +12,25 @@ const dashboardState = {
   masterYear: DEFAULT_YEAR
 };
 
+function showLoadingOverlay() {
+  const overlay = document.getElementById("loading-overlay");
+
+  if (overlay) {
+    overlay.classList.remove("hidden");
+    overlay.setAttribute("aria-busy", "true");
+  }
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById("loading-overlay");
+
+  if (overlay) {
+    overlay.classList.add("hidden");
+    overlay.setAttribute("aria-busy", "false");
+  }
+}
+
+
 const YEAR_SELECT_IDS = [
   "total-revenue-year-select",
   "total-visits-year-select",
@@ -769,6 +788,7 @@ function renderServerRankings() {
 
 async function loadDashboardData() {
   const status = document.getElementById("dashboard-status");
+  showLoadingOverlay();
   if (status) status.textContent = "Loading dashboard data...";
   try {
     const [highlights, holidays, businessMetrics, restaurantRevenue, customerMetrics, serverRankings] = await Promise.all([
@@ -787,6 +807,8 @@ async function loadDashboardData() {
     } else {
       console.error("Dashboard data load failed:", error);
     }
+  } finally {
+    hideLoadingOverlay();
   }
 }
 
@@ -809,6 +831,7 @@ function restoreZoneOrder(zone) {
 function resetChartOrder() { Object.keys(localStorage).filter((k) => k.startsWith("cs5200-dashboard-order-")).forEach((k) => localStorage.removeItem(k)); window.location.reload(); }
 
 document.addEventListener("DOMContentLoaded", () => {
+  showLoadingOverlay();
   setupDragAndDrop();
   document.getElementById("reset-layout-button").addEventListener("click", resetChartOrder);
   loadDashboardData();
