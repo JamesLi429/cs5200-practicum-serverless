@@ -1,6 +1,62 @@
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const COLORS = ["#1264a3", "#1f8f4d", "#d64545", "#8e44ad", "#e67e22", "#2f80ed", "#6c5ce7", "#00897b"];
 
+const LINE_CHARTS = [
+  {
+    selectId: "total-revenue-year-select",
+    chartId: "total-revenue-chart",
+    noteId: "total-revenue-note",
+    metricKey: "totalRevenue",
+    label: "Total revenue",
+    noteLabel: "Selected year latest active month revenue"
+  },
+  {
+    selectId: "total-visits-year-select",
+    chartId: "total-visits-chart",
+    noteId: "total-visits-note",
+    metricKey: "totalVisits",
+    label: "Total visits",
+    noteLabel: "Selected year latest active month visits"
+  },
+  {
+    selectId: "avg-revenue-year-select",
+    chartId: "avg-revenue-chart",
+    noteId: "avg-revenue-note",
+    metricKey: "averageRevenuePerVisit",
+    label: "Average revenue per visit",
+    noteLabel: "Selected year latest active month average revenue per visit"
+  },
+  {
+    selectId: "avg-wait-year-select",
+    chartId: "avg-wait-chart",
+    noteId: "avg-wait-note",
+    metricKey: "averageWaitTime",
+    label: "Average wait time",
+    noteLabel: "Selected year latest active month wait time"
+  }
+];
+
+const CUSTOMER_LINE_CHARTS = [
+  {
+    selectId: "customer-capture-year-select",
+    chartId: "customer-capture-chart",
+    noteId: "customer-capture-note",
+    metricKey: "knownCustomerCaptureRate",
+    label: "Known customer capture rate",
+    noteLabel: "Selected year latest active month customer capture rate",
+    percent: true
+  },
+  {
+    selectId: "loyalty-share-year-select",
+    chartId: "loyalty-share-chart",
+    noteId: "loyalty-share-note",
+    metricKey: "loyaltyMemberRevenueShare",
+    label: "Loyalty member revenue share",
+    noteLabel: "Selected year latest active month loyalty revenue share",
+    percent: true
+  }
+];
+
 const dashboardState = {
   highlights: null,
   holidays: null,
@@ -152,26 +208,52 @@ function latestNonNullMonth(rows, key) {
   return [...rows].reverse().find((row) => row[key] !== null && row[key] !== undefined) || null;
 }
 
-function getMetricSeries(monthlyRows, metricKey) {
-  const years = [...new Set(monthlyRows.map((row) => row.year))].sort((a, b) => a - b);
+function populateYearSelect(selectId, years, onChange) {
+  const select = document.getElementById(selectId);
 
-  return years.map((year, index) => ({
-    label: String(year),
-    color: COLORS[index % COLORS.length],
+  if (!select) {
+    return;
+  }
+
+  const currentValue = select.value;
+  select.innerHTML = "";
+
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = String(year);
+    select.appendChild(option);
+  });
+
+  if (currentValue && years.includes(Number(currentValue))) {
+    select.value = currentValue;
+  } else if (years.length > 0) {
+    select.value = String(years[years.length - 1]);
+  }
+
+  select.onchange = onChange;
+}
+
+function getSingleYearSeries(monthlyRows, metricKey, label, selectedYear, color = COLORS[0]) {
+  const rowsForYear = monthlyRows.filter((row) => row.year === selectedYear);
+
+  return [{
+    label: String(label),
+    color,
     values: MONTHS.map((_, monthIndex) => {
-      const row = monthlyRows.find((item) => item.year === year && item.month === monthIndex + 1);
+      const row = rowsForYear.find((item) => item.month === monthIndex + 1);
       return row ? row[metricKey] : null;
     })
-  }));
+  }];
 }
 
 function renderLineChart(containerId, series, options = {}) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
 
-  const width = 760;
-  const height = 280;
-  const margin = { top: 24, right: 28, bottom: 42, left: 64 };
+  const width = 640;
+  const height = 220;
+  const margin = { top: 18, right: 18, bottom: 34, left: 54 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
@@ -213,9 +295,9 @@ function renderLineChart(containerId, series, options = {}) {
     const x = xScale(index);
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", x);
-    text.setAttribute("y", height - 14);
+    text.setAttribute("y", height - 12);
     text.setAttribute("text-anchor", "middle");
-    text.setAttribute("font-size", "12");
+    text.setAttribute("font-size", "11");
     text.textContent = month;
     svg.appendChild(text);
   });
@@ -223,10 +305,10 @@ function renderLineChart(containerId, series, options = {}) {
   for (let i = 0; i <= 4; i++) {
     const value = maxValue - (i / 4) * range;
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", margin.left - 10);
+    text.setAttribute("x", margin.left - 8);
     text.setAttribute("y", margin.top + (i / 4) * chartHeight + 4);
     text.setAttribute("text-anchor", "end");
-    text.setAttribute("font-size", "11");
+    text.setAttribute("font-size", "10");
     text.textContent = options.percent ? `${formatNumber(value, 0)}%` : formatNumber(value, 0);
     svg.appendChild(text);
   }
@@ -252,7 +334,7 @@ function renderLineChart(containerId, series, options = {}) {
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       circle.setAttribute("cx", xScale(index));
       circle.setAttribute("cy", yScale(value));
-      circle.setAttribute("r", "3.5");
+      circle.setAttribute("r", "3.2");
       circle.setAttribute("fill", item.color);
       svg.appendChild(circle);
     });
@@ -282,6 +364,48 @@ function createLegend(series) {
   return legend;
 }
 
+function renderBusinessCharts() {
+  const data = dashboardState.businessMetrics?.data;
+
+  if (!data) {
+    return;
+  }
+
+  LINE_CHARTS.forEach((chart) => {
+    populateYearSelect(chart.selectId, data.years, renderBusinessCharts);
+
+    const selectedYear = Number(document.getElementById(chart.selectId).value);
+    const series = getSingleYearSeries(data.monthly, chart.metricKey, `${chart.label} ${selectedYear}`, selectedYear);
+
+    renderLineChart(chart.chartId, series);
+    updateLineNote(chart.noteId, data.monthly, chart.metricKey, chart.noteLabel, selectedYear);
+  });
+}
+
+function renderCustomerCharts() {
+  const data = dashboardState.customerMetrics?.data;
+
+  if (!data) {
+    return;
+  }
+
+  CUSTOMER_LINE_CHARTS.forEach((chart, index) => {
+    populateYearSelect(chart.selectId, data.years, renderCustomerCharts);
+
+    const selectedYear = Number(document.getElementById(chart.selectId).value);
+    const series = getSingleYearSeries(
+      data.monthly,
+      chart.metricKey,
+      `${chart.label} ${selectedYear}`,
+      selectedYear,
+      COLORS[index]
+    );
+
+    renderLineChart(chart.chartId, series, { percent: chart.percent });
+    updateLineNote(chart.noteId, data.monthly, chart.metricKey, chart.noteLabel, selectedYear);
+  });
+}
+
 function renderStackedRestaurantChart() {
   const data = dashboardState.restaurantRevenue?.data;
 
@@ -309,9 +433,9 @@ function renderStackedRestaurantChart() {
   const container = document.getElementById("restaurant-revenue-chart");
   container.innerHTML = "";
 
-  const width = 760;
-  const height = 280;
-  const margin = { top: 24, right: 24, bottom: 42, left: 64 };
+  const width = 640;
+  const height = 230;
+  const margin = { top: 18, right: 18, bottom: 34, left: 54 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
 
@@ -348,9 +472,9 @@ function renderStackedRestaurantChart() {
 
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", x + barWidth / 2);
-    text.setAttribute("y", height - 14);
+    text.setAttribute("y", height - 12);
     text.setAttribute("text-anchor", "middle");
-    text.setAttribute("font-size", "12");
+    text.setAttribute("font-size", "11");
     text.textContent = MONTHS[monthIndex];
     svg.appendChild(text);
   });
@@ -358,10 +482,10 @@ function renderStackedRestaurantChart() {
   for (let i = 0; i <= 4; i++) {
     const value = maxTotal - (i / 4) * maxTotal;
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", margin.left - 10);
+    text.setAttribute("x", margin.left - 8);
     text.setAttribute("y", margin.top + (i / 4) * chartHeight + 4);
     text.setAttribute("text-anchor", "end");
-    text.setAttribute("font-size", "11");
+    text.setAttribute("font-size", "10");
     text.textContent = formatNumber(value, 0);
     svg.appendChild(text);
   }
@@ -374,7 +498,7 @@ function renderStackedRestaurantChart() {
 
   const averageMonthlyRevenue = monthTotals.reduce((sum, value) => sum + value, 0) / Math.max(monthTotals.length, 1);
   const latestMonthTotal = [...monthTotals].reverse().find((value) => value > 0) || 0;
-  setText("restaurant-revenue-note", compareToAverage(latestMonthTotal, averageMonthlyRevenue, "Latest active month revenue"));
+  setText("restaurant-revenue-note", compareToAverage(latestMonthTotal, averageMonthlyRevenue, "Selected year latest active month revenue"));
 }
 
 function compareToAverage(latestValue, averageValue, label) {
@@ -388,41 +512,15 @@ function compareToAverage(latestValue, averageValue, label) {
   return `${label}: ${formatNumber(Math.abs(diff), 2)}% ${direction} the average.`;
 }
 
-function renderBusinessCharts() {
-  const data = dashboardState.businessMetrics?.data;
+function updateLineNote(noteId, rows, metricKey, label, selectedYear) {
+  const rowsForYear = rows.filter((row) => row.year === selectedYear);
+  const values = rowsForYear
+    .map((row) => row[metricKey])
+    .filter((value) => value !== null && value !== undefined && Number(value) !== 0);
 
-  if (!data) {
-    return;
-  }
-
-  renderLineChart("total-revenue-chart", getMetricSeries(data.monthly, "totalRevenue"));
-  renderLineChart("total-visits-chart", getMetricSeries(data.monthly, "totalVisits"));
-  renderLineChart("avg-revenue-chart", getMetricSeries(data.monthly, "averageRevenuePerVisit"));
-  renderLineChart("avg-wait-chart", getMetricSeries(data.monthly, "averageWaitTime"));
-
-  updateLineNote("total-revenue-note", data.monthly, "totalRevenue", "Latest active month revenue");
-  updateLineNote("total-visits-note", data.monthly, "totalVisits", "Latest active month visits");
-  updateLineNote("avg-revenue-note", data.monthly, "averageRevenuePerVisit", "Latest active month average revenue per visit");
-  updateLineNote("avg-wait-note", data.monthly, "averageWaitTime", "Latest active month wait time");
-}
-
-function renderCustomerCharts() {
-  const data = dashboardState.customerMetrics?.data;
-
-  if (!data) {
-    return;
-  }
-
-  renderLineChart("customer-capture-chart", getMetricSeries(data.monthly, "knownCustomerCaptureRate"), { percent: true });
-  renderLineChart("loyalty-share-chart", getMetricSeries(data.monthly, "loyaltyMemberRevenueShare"), { percent: true });
-
-  updateLineNote("customer-capture-note", data.monthly, "knownCustomerCaptureRate", "Latest active month customer capture rate");
-  updateLineNote("loyalty-share-note", data.monthly, "loyaltyMemberRevenueShare", "Latest active month loyalty revenue share");
-}
-
-function updateLineNote(noteId, rows, metricKey, label) {
-  const values = rows.map((row) => row[metricKey]).filter((value) => value !== null && value !== undefined && Number(value) !== 0);
-  const latest = [...rows].reverse().find((row) => row[metricKey] !== null && row[metricKey] !== undefined && Number(row[metricKey]) !== 0);
+  const latest = [...rowsForYear]
+    .reverse()
+    .find((row) => row[metricKey] !== null && row[metricKey] !== undefined && Number(row[metricKey]) !== 0);
 
   if (!latest || values.length === 0) {
     setText(noteId, `${label}: not enough data for comparison.`);

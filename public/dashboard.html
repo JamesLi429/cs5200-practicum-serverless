@@ -19,6 +19,21 @@
   </header>
 
   <main>
+    <section class="control-panel panel">
+      <div>
+        <h2>Dashboard Controls</h2>
+        <p>
+          Data loads only after user action. Charts use asynchronous API calls and support responsive layout.
+          Chart cards can be dragged during the session, and their order is saved in this browser.
+        </p>
+      </div>
+      <div class="button-row">
+        <button id="load-dashboard-button">Load Dashboard Data</button>
+        <button id="reset-layout-button" type="button">Reset Chart Order</button>
+      </div>
+      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
+    </section>
+
     <section class="top-highlight-grid" aria-label="Top dashboard highlights">
       <article class="panel highlight-panel">
         <h2>Latest Business Highlights</h2>
@@ -40,21 +55,6 @@
           <li>--</li>
         </ol>
       </article>
-    </section>
-
-    <section class="control-panel panel">
-      <div>
-        <h2>Dashboard Controls</h2>
-        <p>
-          Data loads only after user action. Charts use asynchronous API calls and support responsive layout.
-          Chart cards can be dragged during the session, and their order is saved in this browser.
-        </p>
-      </div>
-      <div class="button-row">
-        <button id="load-dashboard-button">Load Dashboard Data</button>
-        <button id="reset-layout-button" type="button">Reset Chart Order</button>
-      </div>
-      <p id="dashboard-status">Dashboard data has not been loaded yet.</p>
     </section>
 
     <section class="main-dashboard-grid" aria-label="Dashboard sections">
@@ -82,29 +82,61 @@
 
         <div id="business-chart-zone" class="chart-zone" data-zone-id="business-chart-zone">
           <article class="chart-card" draggable="true" data-card-id="total-revenue-chart-card">
-            <h3>Total Revenue Trend</h3>
-            <p class="chart-explanation">Monthly revenue by year. Revenue means food bill plus alcohol bill.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Total Revenue Trend</h3>
+                <p class="chart-explanation">Monthly revenue for the selected year. Revenue means food bill plus alcohol bill.</p>
+              </div>
+              <label>
+                Year
+                <select id="total-revenue-year-select"></select>
+              </label>
+            </div>
             <div id="total-revenue-chart" class="chart-box"></div>
             <p id="total-revenue-note" class="chart-note">Above/below average note: --</p>
           </article>
 
           <article class="chart-card" draggable="true" data-card-id="total-visits-chart-card">
-            <h3>Total Visits Trend</h3>
-            <p class="chart-explanation">Monthly visits by year.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Total Visits Trend</h3>
+                <p class="chart-explanation">Monthly visits for the selected year.</p>
+              </div>
+              <label>
+                Year
+                <select id="total-visits-year-select"></select>
+              </label>
+            </div>
             <div id="total-visits-chart" class="chart-box"></div>
             <p id="total-visits-note" class="chart-note">Above/below average note: --</p>
           </article>
 
           <article class="chart-card" draggable="true" data-card-id="avg-revenue-chart-card">
-            <h3>Average Revenue per Visit Trend</h3>
-            <p class="chart-explanation">Monthly average revenue per visit by year.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Average Revenue per Visit Trend</h3>
+                <p class="chart-explanation">Monthly average revenue per visit for the selected year.</p>
+              </div>
+              <label>
+                Year
+                <select id="avg-revenue-year-select"></select>
+              </label>
+            </div>
             <div id="avg-revenue-chart" class="chart-box"></div>
             <p id="avg-revenue-note" class="chart-note">Above/below average note: --</p>
           </article>
 
           <article class="chart-card" draggable="true" data-card-id="avg-wait-chart-card">
-            <h3>Average Wait Time Trend</h3>
-            <p class="chart-explanation">Monthly average wait time by year.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Average Wait Time Trend</h3>
+                <p class="chart-explanation">Monthly average wait time for the selected year.</p>
+              </div>
+              <label>
+                Year
+                <select id="avg-wait-year-select"></select>
+              </label>
+            </div>
             <div id="avg-wait-chart" class="chart-box"></div>
             <p id="avg-wait-note" class="chart-note">Above/below average note: --</p>
           </article>
@@ -142,15 +174,31 @@
 
         <div id="customer-chart-zone" class="chart-zone" data-zone-id="customer-chart-zone">
           <article class="chart-card" draggable="true" data-card-id="customer-capture-chart-card">
-            <h3>Customer Capture Trend</h3>
-            <p class="chart-explanation">Known customer capture rate = visits with cust_id divided by total visits.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Customer Capture Trend</h3>
+                <p class="chart-explanation">Known customer capture rate = visits with cust_id divided by total visits.</p>
+              </div>
+              <label>
+                Year
+                <select id="customer-capture-year-select"></select>
+              </label>
+            </div>
             <div id="customer-capture-chart" class="chart-box"></div>
             <p id="customer-capture-note" class="chart-note">Above/below average note: --</p>
           </article>
 
           <article class="chart-card" draggable="true" data-card-id="loyalty-share-chart-card">
-            <h3>Loyalty Revenue Trend</h3>
-            <p class="chart-explanation">Loyalty member revenue share = loyalty member revenue divided by total revenue.</p>
+            <div class="chart-card-header">
+              <div>
+                <h3>Loyalty Revenue Trend</h3>
+                <p class="chart-explanation">Loyalty member revenue share = loyalty member revenue divided by total revenue.</p>
+              </div>
+              <label>
+                Year
+                <select id="loyalty-share-year-select"></select>
+              </label>
+            </div>
             <div id="loyalty-share-chart" class="chart-box"></div>
             <p id="loyalty-share-note" class="chart-note">Above/below average note: --</p>
           </article>
